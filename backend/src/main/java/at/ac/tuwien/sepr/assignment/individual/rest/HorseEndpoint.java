@@ -1,25 +1,36 @@
 package at.ac.tuwien.sepr.assignment.individual.rest;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseListDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateRestDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.exception.ConflictException;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
 import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
 import at.ac.tuwien.sepr.assignment.individual.service.HorseService;
+
 import java.lang.invoke.MethodHandles;
 import java.util.stream.Stream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
@@ -78,8 +89,8 @@ public class HorseEndpoint {
   /**
    * Updates the details of an existing horse, including an optional image file.
    *
-   * @param id        the ID of the horse to update
-   * @param toUpdate  the updated horse data
+   * @param id       the ID of the horse to update
+   * @param toUpdate the updated horse data
    * @return the updated horse details
    * @throws ValidationException     if validation fails
    * @throws ConflictException       if a conflict occurs while updating
@@ -97,6 +108,47 @@ public class HorseEndpoint {
     } catch (NotFoundException e) {
       HttpStatus status = HttpStatus.NOT_FOUND;
       logClientError(status, "Horse to update not found", e);
+      throw new ResponseStatusException(status, e.getMessage(), e);
+    }
+  }
+
+
+  // TODO
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public HorseDetailDto create(
+      @ModelAttribute HorseCreateDto toCreate,
+      @RequestParam(value = "image", required = false) MultipartFile image)
+      throws ValidationException, ConflictException {
+    LOG.info("POST " + BASE_PATH + "/{}", toCreate);
+    LOG.debug("Body of request:\n{}", toCreate);
+
+    try {
+      return service.create(toCreate, image);
+    } catch (ValidationException e) {
+      HttpStatus status = HttpStatus.BAD_REQUEST;
+      logClientError(status, "Validation of Horse failed", e);
+      throw new ResponseStatusException(status, e.getMessage(), e);
+    } catch (ConflictException e) {
+      HttpStatus status = HttpStatus.CONFLICT;
+      logClientError(status, "Conflict with existing data", e);
+      throw new ResponseStatusException(status, e.getMessage(), e);
+    }
+  }
+
+
+  // TODO
+  @GetMapping("/{id}/image")
+  public ResponseEntity<byte[]> getHorseImage(
+      @PathVariable("id") long id) {
+    LOG.info("GET image for horse with id {}", id);
+    try {
+      HorseImageDto horseImageDto = service.getImageById(id);
+      HttpHeaders headers = new HttpHeaders();
+      headers.setContentType(MediaType.parseMediaType(horseImageDto.mimeType()));
+      return new ResponseEntity<>(horseImageDto.image(), headers, HttpStatus.OK);
+    } catch (NotFoundException e) {
+      HttpStatus status = HttpStatus.NOT_FOUND;
+      logClientError(status, "Image for horse with ID " + id + " not found", e);
       throw new ResponseStatusException(status, e.getMessage(), e);
     }
   }

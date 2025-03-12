@@ -1,12 +1,16 @@
 package at.ac.tuwien.sepr.assignment.individual.service.impl;
 
 
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.exception.ConflictException;
 import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
+
 import java.lang.invoke.MethodHandles;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -48,5 +52,44 @@ public class HorseValidator {
     }
 
   }
+
+
+  // TODO
+  public void validateForCreate(HorseCreateDto horse) throws ValidationException, ConflictException {
+    LOG.trace("validateForCreate({})", horse);
+    List<String> validationErrors = new ArrayList<>();
+
+    if (horse.name() == null || horse.name().isBlank()) {
+      validationErrors.add("Horse name is required and cannot be empty");
+    }
+
+    if (horse.description() != null) {
+      if (horse.description().isBlank()) {
+        validationErrors.add("Horse description is given but blank");
+      }
+      if (horse.description().length() > 4095) {
+        validationErrors.add("Horse description too long: longer than 4095 characters");
+      }
+    }
+
+    if (horse.dateOfBirth() == null) {
+      validationErrors.add("Horse birth date is required");
+    } else {
+      LocalDate today = LocalDate.now();
+      if (horse.dateOfBirth().isAfter(today)) {
+        validationErrors.add("Horse birth date cannot be in the future");
+      }
+    }
+
+    if (horse.sex() == null) {
+      validationErrors.add("Sex is required");
+    }
+
+    if (!validationErrors.isEmpty()) {
+      throw new ValidationException("Validation of horse for update failed", validationErrors);
+    }
+
+  }
+
 
 }

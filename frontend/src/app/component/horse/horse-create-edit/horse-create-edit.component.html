@@ -104,6 +104,21 @@
   </div>
 
 
+  <div class="row mb-2">
+    <label for="horseImage" class="col-form-label text-md-end text-muted col-md-2">
+      Image
+    </label>
+    <div class="col-md-10 col-lg-8">
+      <input
+        type="file"
+        id="horseImage"
+        (change)="onFileSelected($event)"
+        accept="image/*"
+        class="form-control">
+    </div>
+  </div>
+
+
   <div class="mt-4 d-flex flex-row">
     <button
       class="btn btn-primary"

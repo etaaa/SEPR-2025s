@@ -36,16 +36,18 @@ export class HorseService {
    * @param horse the data for the horse that should be created
    * @return an Observable for the created horse
    */
-  create(horse: HorseCreate): Observable<Horse> {
+  create(formData: FormData): Observable<Horse> {
+    /*
     console.log(horse);
     // Cast the object to any, so that we can circumvent the type checker.
     // We _need_ the date to be a string here, and just passing the object with the
     // “type error” to the HTTP client is unproblematic
     (horse as any).dateOfBirth = formatIsoDate(horse.dateOfBirth);
+    */
 
     return this.http.post<Horse>(
       baseUri,
-      horse
+      formData
     ).pipe(
       map(this.fixHorseDate)
     );

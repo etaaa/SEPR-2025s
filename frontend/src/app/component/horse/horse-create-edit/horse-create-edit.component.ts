@@ -140,12 +140,25 @@ export class HorseCreateEditComponent implements OnInit {
       if (this.horse.description === '') {
         delete this.horse.description;
       }
+
+      const formData = new FormData();
+      formData.append('name', this.horse.name);
+      formData.append('dateOfBirth', this.horseBirthDateText);
+      formData.append('sex', this.horse.sex);
+      if (this.horse.description) {
+        formData.append('description', this.horse.description);
+      }
+      if (this.horse.owner && this.horse.owner.id) {
+        formData.append('ownerId', this.horse.owner.id.toString());
+      }
+      if (this.selectedFile) {
+        formData.append('image', this.selectedFile, this.selectedFile.name);
+      }
+
       let observable: Observable<Horse>;
       switch (this.mode) {
         case HorseCreateEditMode.create:
-          observable = this.service.create(
-            convertFromHorseToCreate(this.horse)
-          );
+          observable = this.service.create(formData);
           break;
         default:
           console.error('Unknown HorseCreateEditMode', this.mode);
@@ -166,4 +179,16 @@ export class HorseCreateEditComponent implements OnInit {
       });
     }
   }
+
+
+  selectedFile: File | null = null;
+
+  public onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedFile = input.files[0];
+    }
+  }
+
+
 }
