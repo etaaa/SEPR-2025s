@@ -5,8 +5,7 @@ package at.ac.tuwien.sepr.assignment.individual.entity;
  */
 public record Owner(
     Long id,
-    String firstName,
-    String lastName,
-    String email
+    String name,
+    String description
 ) {
 }

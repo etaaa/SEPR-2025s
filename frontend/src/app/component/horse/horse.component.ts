@@ -55,7 +55,7 @@ export class HorseComponent implements OnInit {
 
   ownerName(owner: Owner | null): string {
     return owner
-      ? `${owner.firstName} ${owner.lastName}`
+      ? owner.name
       : '';
   }
 

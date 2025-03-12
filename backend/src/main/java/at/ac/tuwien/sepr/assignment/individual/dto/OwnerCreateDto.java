@@ -5,8 +5,7 @@ package at.ac.tuwien.sepr.assignment.individual.dto;
  * This record encapsulates the required fields for registering an owner in the system.
  */
 public record OwnerCreateDto(
-    String firstName,
-    String lastName,
-    String email
+    String name,
+    String description
 ) {
 }

@@ -130,7 +130,7 @@ export class HorseCreateEditComponent implements OnInit {
   public formatOwnerName(owner: Owner | null | undefined): string {
     return (owner == null)
       ? ''
-      : `${owner.firstName} ${owner.lastName}`;
+      : owner.name;
   }
 
 

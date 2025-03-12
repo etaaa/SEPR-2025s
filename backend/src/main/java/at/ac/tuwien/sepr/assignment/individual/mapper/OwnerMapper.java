@@ -27,8 +27,7 @@ public class OwnerMapper {
     }
     return new OwnerDto(
         owner.id(),
-        owner.firstName(),
-        owner.lastName(),
-        owner.email());
+        owner.name(),
+        owner.description());
   }
 }

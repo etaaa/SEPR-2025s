@@ -6,8 +6,7 @@ package at.ac.tuwien.sepr.assignment.individual.dto;
  */
 public record OwnerDto(
     long id,
-    String firstName,
-    String lastName,
-    String email
+    String name,
+    String description
 ) {
 }
