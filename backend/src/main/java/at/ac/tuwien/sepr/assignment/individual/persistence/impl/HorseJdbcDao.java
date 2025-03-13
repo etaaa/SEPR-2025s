@@ -32,11 +32,15 @@ public class HorseJdbcDao implements HorseDao {
   private static final String TABLE_NAME = "horse";
 
   private static final String SQL_SELECT_ALL =
-      "SELECT * FROM " + TABLE_NAME;
+      "SELECT id, name, description, date_of_birth, sex, owner_id, "
+          + "CASE WHEN image IS NOT NULL THEN 1 ELSE 0 END AS has_image "
+          + "FROM " + TABLE_NAME;
 
   private static final String SQL_SELECT_BY_ID =
-      "SELECT * FROM " + TABLE_NAME
-          + " WHERE ID = :id";
+      "SELECT id, name, description, date_of_birth, sex, owner_id, "
+          + "CASE WHEN image IS NOT NULL THEN 1 ELSE 0 END AS has_image "
+          + "FROM " + TABLE_NAME
+          + " WHERE id = :id";
 
   // TODO
   private static final String SQL_SELECT_IMAGE_BY_ID =
@@ -49,7 +53,10 @@ public class HorseJdbcDao implements HorseDao {
               SET name = :name,
                   description = :description,
                   date_of_birth = :date_of_birth,
-                  sex = :sex
+                  sex = :sex,
+                  owner_id = :owner_id,
+                  image = :image,
+                  mime_type = :mime_type
               WHERE id = :id
           """;
 
@@ -115,7 +122,7 @@ public class HorseJdbcDao implements HorseDao {
 
 
   @Override
-  public Horse update(HorseUpdateDto horse) throws NotFoundException {
+  public Horse update(HorseUpdateDto horse, HorseImageDto horseImage) throws NotFoundException {
     LOG.trace("update({})", horse);
     int updated = jdbcClient
         .sql(SQL_UPDATE)
@@ -125,6 +132,8 @@ public class HorseJdbcDao implements HorseDao {
         .param("date_of_birth", horse.dateOfBirth())
         .param("sex", horse.sex().toString())
         .param("owner_id", horse.ownerId())
+        .param("image", horseImage.image())
+        .param("mime_type", horseImage.mimeType())
         .update();
 
     if (updated == 0) {
@@ -139,7 +148,9 @@ public class HorseJdbcDao implements HorseDao {
         horse.description(),
         horse.dateOfBirth(),
         horse.sex(),
-        horse.ownerId());
+        horse.ownerId(),
+        horseImage.image() != null ? "/horses/" + horse.id() + "/image" : null
+    );
   }
 
 
@@ -172,19 +183,26 @@ public class HorseJdbcDao implements HorseDao {
         horse.description(),
         horse.dateOfBirth(),
         horse.sex(),
-        horse.ownerId()
+        horse.ownerId(),
+        horseImage.image() != null ? "/horses/" + id + "/image" : null
     );
   }
 
 
   private Horse mapRow(ResultSet result, int rownum) throws SQLException {
+    long id = result.getLong("id");
+    boolean hasImage = result.getInt("has_image") == 1;
+    String imageUrl = hasImage ? "/horses/" + id + "/image" : null;
+
     return new Horse(
-        result.getLong("id"),
+        id,
         result.getString("name"),
         result.getString("description"),
         result.getDate("date_of_birth").toLocalDate(),
         Sex.valueOf(result.getString("sex")),
-        result.getObject("owner_id", Long.class));
+        result.getObject("owner_id", Long.class),
+        imageUrl
+    );
   }
 
 }

@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -96,20 +95,32 @@ public class HorseEndpoint {
    * @throws ConflictException       if a conflict occurs while updating
    * @throws ResponseStatusException if the horse is not found
    */
-  @PutMapping(path = "{id}")
+  @PutMapping(path = "{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public HorseDetailDto update(
       @PathVariable("id") long id,
-      @RequestBody HorseUpdateRestDto toUpdate)
+      @ModelAttribute HorseUpdateRestDto toUpdate,
+      @RequestParam(value = "image", required = false) MultipartFile image)
       throws ValidationException, ConflictException {
+
     LOG.info("PUT " + BASE_PATH + "/{}", toUpdate);
     LOG.debug("Body of request:\n{}", toUpdate);
+
     try {
-      return service.update(toUpdate.toUpdateDtoWithId(id));
+      return service.update(toUpdate.toUpdateDtoWithId(id), image);
     } catch (NotFoundException e) {
       HttpStatus status = HttpStatus.NOT_FOUND;
       logClientError(status, "Horse to update not found", e);
       throw new ResponseStatusException(status, e.getMessage(), e);
+    } catch (ValidationException e) {
+      HttpStatus status = HttpStatus.BAD_REQUEST;
+      logClientError(status, "Validation of Horse failed", e);
+      throw new ResponseStatusException(status, e.getMessage(), e);
+    } catch (ConflictException e) {
+      HttpStatus status = HttpStatus.CONFLICT;
+      logClientError(status, "Conflict with existing data", e);
+      throw new ResponseStatusException(status, e.getMessage(), e);
     }
+
   }
 
 
@@ -119,6 +130,7 @@ public class HorseEndpoint {
       @ModelAttribute HorseCreateDto toCreate,
       @RequestParam(value = "image", required = false) MultipartFile image)
       throws ValidationException, ConflictException {
+
     LOG.info("POST " + BASE_PATH + "/{}", toCreate);
     LOG.debug("Body of request:\n{}", toCreate);
 
@@ -133,6 +145,7 @@ public class HorseEndpoint {
       logClientError(status, "Conflict with existing data", e);
       throw new ResponseStatusException(status, e.getMessage(), e);
     }
+
   }
 
 
@@ -140,7 +153,9 @@ public class HorseEndpoint {
   @GetMapping("/{id}/image")
   public ResponseEntity<byte[]> getHorseImage(
       @PathVariable("id") long id) {
+
     LOG.info("GET image for horse with id {}", id);
+
     try {
       HorseImageDto horseImageDto = service.getImageById(id);
       HttpHeaders headers = new HttpHeaders();
@@ -151,6 +166,7 @@ public class HorseEndpoint {
       logClientError(status, "Image for horse with ID " + id + " not found", e);
       throw new ResponseStatusException(status, e.getMessage(), e);
     }
+
   }
 
 

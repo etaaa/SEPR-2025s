@@ -12,6 +12,7 @@ public record Horse(
     String description,
     LocalDate dateOfBirth,
     Sex sex,
-    Long ownerId
+    Long ownerId,
+    String imageUrl
 ) {
 }

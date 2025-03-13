@@ -36,7 +36,7 @@ public interface HorseService {
    * @throws ValidationException if the update data given for the horse is in itself incorrect (description too long, no name, …)
    * @throws ConflictException   if the update data given for the horse is in conflict the data currently in the system (owner does not exist, …)
    */
-  HorseDetailDto update(HorseUpdateDto horse) throws NotFoundException, ValidationException, ConflictException;
+  HorseDetailDto update(HorseUpdateDto horse, MultipartFile image) throws NotFoundException, ValidationException, ConflictException;
 
 
   /**

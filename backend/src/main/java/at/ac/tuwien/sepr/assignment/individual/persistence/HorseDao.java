@@ -31,7 +31,7 @@ public interface HorseDao {
    * @return the updated horse
    * @throws NotFoundException if the Horse with the given ID does not exist in the persistent data store
    */
-  Horse update(HorseUpdateDto horse) throws NotFoundException;
+  Horse update(HorseUpdateDto horse, HorseImageDto horseImage) throws NotFoundException;
 
 
   // TODO

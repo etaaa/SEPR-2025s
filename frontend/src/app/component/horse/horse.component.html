@@ -1,28 +1,3 @@
-<!-- SANITY CHECK BANNER
-    This is just for checking, that your setup works.
-    You can – and should – remove this later
--->
-
-@if (bannerError) {
-  <div class="container mt-3 mb-3">
-    <div class="alert alert-danger" role="alert">
-      <h4>Error!</h4> {{ bannerError }}
-      <p>Could not load horses.</p>
-      <p>Something is not quite right. Did you start the backend?</p>
-    </div>
-  </div>
-} @else if (horses) {
-  <div class="container mt-3">
-    <div class="alert alert-success" role="alert">
-      <h4 class="alert-heading">Well done!</h4>
-      <p>Your application is up and running.</p>
-      <p>You should see the current list of horses below.</p>
-    </div>
-  </div>
-}
-
-<!-- END SANITY CHECK BANNER -->
-
 <div class="d-flex flex-row w-auto">
   <button class="btn btn-primary mr-1" (click)="reloadHorses()" aria-label="Reload horses">
     <i class="bi bi-arrow-clockwise"></i>
@@ -113,6 +88,12 @@
               <a class="btn btn-sm responsive-info-button"
                  aria-label="Show horse details">
                 <i class="bi bi-info-lg"></i>
+              </a>
+
+              <a class="btn btn-sm responsive-edit-button"
+                 [routerLink]="['/horses', horse.id, 'edit']"
+                 aria-label="Edit horse">
+                <i class="bi bi-pencil"></i>
               </a>
 
               <button class="btn btn-sm responsive-danger-button" (click)="horseForDeletion = horse"

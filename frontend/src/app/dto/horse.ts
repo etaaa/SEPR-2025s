@@ -8,6 +8,7 @@ export interface Horse {
   dateOfBirth: Date;
   sex: Sex;
   owner?: Owner;
+  imageUrl?: string;
 }
 
 export interface HorseSearch {
@@ -21,6 +22,7 @@ export interface HorseCreate {
   dateOfBirth: Date;
   sex: Sex;
   ownerId?: number;
+  imageUrl?: string;
 }
 
 export function convertFromHorseToCreate(horse: Horse): HorseCreate {
@@ -30,6 +32,7 @@ export function convertFromHorseToCreate(horse: Horse): HorseCreate {
     dateOfBirth: horse.dateOfBirth,
     sex: horse.sex,
     ownerId: horse.owner?.id,
+    imageUrl: horse.imageUrl
   };
 }
 

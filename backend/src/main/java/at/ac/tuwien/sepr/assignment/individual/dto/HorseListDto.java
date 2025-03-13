@@ -13,6 +13,7 @@ public record HorseListDto(
     String description,
     LocalDate dateOfBirth,
     Sex sex,
-    OwnerDto owner
+    OwnerDto owner,
+    String imageUrl
 ) {
 }

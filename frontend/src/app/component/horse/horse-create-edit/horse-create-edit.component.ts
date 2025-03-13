@@ -54,6 +54,8 @@ export class HorseCreateEditComponent implements OnInit {
     switch (this.mode) {
       case HorseCreateEditMode.create:
         return 'Create New Horse';
+      case HorseCreateEditMode.edit:
+        return 'Edit Horse';
       default:
         return '?';
     }
@@ -63,6 +65,8 @@ export class HorseCreateEditComponent implements OnInit {
     switch (this.mode) {
       case HorseCreateEditMode.create:
         return 'Create';
+      case HorseCreateEditMode.edit:
+        return 'Edit';
       default:
         return '?';
     }
@@ -106,6 +110,8 @@ export class HorseCreateEditComponent implements OnInit {
     switch (this.mode) {
       case HorseCreateEditMode.create:
         return 'created';
+      case HorseCreateEditMode.edit:
+        return 'edited';
       default:
         return '?';
     }
@@ -118,6 +124,20 @@ export class HorseCreateEditComponent implements OnInit {
   ngOnInit(): void {
     this.route.data.subscribe(data => {
       this.mode = data.mode;
+      if (this.mode === HorseCreateEditMode.edit) {
+        const id = this.route.snapshot.paramMap.get('id');
+        if (id) {
+          this.service.getById(+id).subscribe({
+            next: horse => {
+              this.horse = horse;
+              this.horseBirthDateIsSet = true;
+            },
+            error: err => {
+              console.error('Error loading horse', err);
+            }
+          });
+        }
+      }
     });
   }
 
@@ -159,6 +179,9 @@ export class HorseCreateEditComponent implements OnInit {
       switch (this.mode) {
         case HorseCreateEditMode.create:
           observable = this.service.create(formData);
+          break;
+        case HorseCreateEditMode.edit:
+          observable = this.service.update(this.horse.id!, formData);
           break;
         default:
           console.error('Unknown HorseCreateEditMode', this.mode);

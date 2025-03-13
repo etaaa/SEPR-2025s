@@ -73,14 +73,29 @@ public class HorseServiceImpl implements HorseService {
 
 
   @Override
-  public HorseDetailDto update(HorseUpdateDto horse) throws NotFoundException, ValidationException, ConflictException {
+  public HorseDetailDto update(HorseUpdateDto horse, MultipartFile image) throws NotFoundException, ValidationException, ConflictException {
     LOG.trace("update({})", horse);
+
     validator.validateForUpdate(horse);
 
-    var updatedHorse = dao.update(horse);
+    HorseImageDto horseImage = new HorseImageDto(null, null);
+    if (image != null && !image.isEmpty()) {
+      try {
+        horseImage = new HorseImageDto(
+            image.getBytes(),
+            image.getContentType()
+        );
+      } catch (IOException e) {
+        LOG.error("Error while processing the image", e);
+        throw new RuntimeException("Error while processing the image", e);
+      }
+    }
+
+    var updatedHorse = dao.update(horse, horseImage);
     return mapper.entityToDetailDto(
         updatedHorse,
         ownerMapForSingleId(updatedHorse.ownerId()));
+
   }
 
 
@@ -91,7 +106,7 @@ public class HorseServiceImpl implements HorseService {
 
     validator.validateForCreate(horse);
 
-    HorseImageDto horseImage = null;
+    HorseImageDto horseImage = new HorseImageDto(null, null);
     if (image != null && !image.isEmpty()) {
       try {
         horseImage = new HorseImageDto(

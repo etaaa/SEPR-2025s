@@ -53,6 +53,23 @@ export class HorseService {
     );
   }
 
+  getById(id: number): Observable<Horse> {
+    return this.http.get<Horse>(
+      `${baseUri}/${id}`
+    ).pipe(
+      map(this.fixHorseDate)
+    );
+  }
+
+  update(id: number, formData: FormData): Observable<Horse> {
+    return this.http.put<Horse>(
+      `${baseUri}/${id}`,
+      formData
+    ).pipe(
+      map(this.fixHorseDate)
+    );
+  }
+
   private fixHorseDate(horse: Horse): Horse {
     // Parse the string to a Date
     horse.dateOfBirth = new Date(horse.dateOfBirth as unknown as string);
