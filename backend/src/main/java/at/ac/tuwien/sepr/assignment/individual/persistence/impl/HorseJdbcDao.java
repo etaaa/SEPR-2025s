@@ -31,21 +31,25 @@ public class HorseJdbcDao implements HorseDao {
 
   private static final String TABLE_NAME = "horse";
 
-  private static final String SQL_SELECT_ALL =
-      "SELECT id, name, description, date_of_birth, sex, owner_id, "
-          + "CASE WHEN image IS NOT NULL THEN 1 ELSE 0 END AS has_image "
-          + "FROM " + TABLE_NAME;
-
   private static final String SQL_SELECT_BY_ID =
       "SELECT id, name, description, date_of_birth, sex, owner_id, "
           + "CASE WHEN image IS NOT NULL THEN 1 ELSE 0 END AS has_image "
           + "FROM " + TABLE_NAME
           + " WHERE id = :id";
 
-  // TODO
   private static final String SQL_SELECT_IMAGE_BY_ID =
       "SELECT image, mime_type FROM " + TABLE_NAME
           + " WHERE ID = :id";
+
+  private static final String SQL_SELECT_ALL =
+      "SELECT id, name, description, date_of_birth, sex, owner_id, "
+          + "CASE WHEN image IS NOT NULL THEN 1 ELSE 0 END AS has_image "
+          + "FROM " + TABLE_NAME;
+
+  private static final String SQL_INSERT =
+      "INSERT INTO " + TABLE_NAME
+          + " (name, description, date_of_birth, sex, owner_id, image, mime_type) "
+          + "VALUES (:name, :description, :date_of_birth, :sex, :owner_id, :image, :mime_type)";
 
   private static final String SQL_UPDATE =
       "UPDATE " + TABLE_NAME
@@ -60,11 +64,9 @@ public class HorseJdbcDao implements HorseDao {
               WHERE id = :id
           """;
 
-  // TODO
-  private static final String SQL_INSERT =
-      "INSERT INTO " + TABLE_NAME
-          + " (name, description, date_of_birth, sex, owner_id, image, mime_type) "
-          + "VALUES (:name, :description, :date_of_birth, :sex, :owner_id, :image, :mime_type)";
+  private static final String SQL_DELETE =
+      "DELETE FROM " + TABLE_NAME
+          + " WHERE id = :id";
 
 
   private final JdbcClient jdbcClient;
@@ -72,15 +74,6 @@ public class HorseJdbcDao implements HorseDao {
   @Autowired
   public HorseJdbcDao(JdbcClient jdbcClient) {
     this.jdbcClient = jdbcClient;
-  }
-
-  @Override
-  public List<Horse> getAll() {
-    LOG.trace("getAll()");
-    return jdbcClient
-        .sql(SQL_SELECT_ALL)
-        .query(this::mapRow)
-        .list();
   }
 
   @Override
@@ -104,7 +97,6 @@ public class HorseJdbcDao implements HorseDao {
   }
 
 
-  // TODO
   @Override
   public HorseImageDto getImageById(long id) throws NotFoundException {
     List<HorseImageDto> images = jdbcClient
@@ -118,6 +110,50 @@ public class HorseJdbcDao implements HorseDao {
     }
 
     return images.get(0);
+  }
+
+
+  @Override
+  public List<Horse> getAll() {
+    LOG.trace("getAll()");
+    return jdbcClient
+        .sql(SQL_SELECT_ALL)
+        .query(this::mapRow)
+        .list();
+  }
+
+
+  @Override
+  public Horse create(HorseCreateDto horse, HorseImageDto horseImage) {
+    LOG.trace("create({})", horse);
+
+    KeyHolder keyHolder = new GeneratedKeyHolder();
+
+    int rowsAffected = jdbcClient.sql(SQL_INSERT)
+        .param("name", horse.name())
+        .param("description", horse.description())
+        .param("date_of_birth", horse.dateOfBirth())
+        .param("sex", horse.sex().toString())
+        .param("owner_id", horse.ownerId())
+        .param("image", horseImage.image())
+        .param("mime_type", horseImage.mimeType())
+        .update(keyHolder);
+
+    if (rowsAffected == 0 || keyHolder.getKey() == null) {
+      throw new RuntimeException("Failed to insert horse into database");
+    }
+
+    Long id = keyHolder.getKey().longValue();
+
+    return new Horse(
+        id,
+        horse.name(),
+        horse.description(),
+        horse.dateOfBirth(),
+        horse.sex(),
+        horse.ownerId(),
+        horseImage.image() != null ? "/horses/" + id + "/image" : null
+    );
   }
 
 
@@ -154,38 +190,18 @@ public class HorseJdbcDao implements HorseDao {
   }
 
 
-  // TODO
   @Override
-  public Horse create(HorseCreateDto horse, HorseImageDto horseImage) {
-    LOG.trace("create({})", horse);
+  public void delete(long id) throws NotFoundException {
+    LOG.trace("delete({})", id);
 
-    KeyHolder keyHolder = new GeneratedKeyHolder();
+    int rowsAffected = jdbcClient
+        .sql(SQL_DELETE)
+        .param("id", id)
+        .update();
 
-    int rowsAffected = jdbcClient.sql(SQL_INSERT)
-        .param("name", horse.name())
-        .param("description", horse.description())
-        .param("date_of_birth", horse.dateOfBirth())
-        .param("sex", horse.sex().toString())
-        .param("owner_id", horse.ownerId())
-        .param("image", horseImage.image())
-        .param("mime_type", horseImage.mimeType())
-        .update(keyHolder);
-
-    if (rowsAffected == 0 || keyHolder.getKey() == null) {
-      throw new RuntimeException("Failed to insert horse into database");
+    if (rowsAffected == 0) {
+      throw new NotFoundException("No horse with ID " + id + " found for deletion");
     }
-
-    Long id = keyHolder.getKey().longValue();
-
-    return new Horse(
-        id,
-        horse.name(),
-        horse.description(),
-        horse.dateOfBirth(),
-        horse.sex(),
-        horse.ownerId(),
-        horseImage.image() != null ? "/horses/" + id + "/image" : null
-    );
   }
 
 

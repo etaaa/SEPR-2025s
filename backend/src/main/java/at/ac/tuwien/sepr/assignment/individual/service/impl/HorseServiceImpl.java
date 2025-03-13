@@ -53,6 +53,24 @@ public class HorseServiceImpl implements HorseService {
     this.ownerService = ownerService;
   }
 
+
+  @Override
+  public HorseDetailDto getById(long id) throws NotFoundException {
+    LOG.trace("details({})", id);
+    Horse horse = dao.getById(id);
+    return mapper.entityToDetailDto(
+        horse,
+        ownerMapForSingleId(horse.ownerId()));
+  }
+
+
+  @Override
+  public HorseImageDto getImageById(long id) throws NotFoundException {
+    LOG.trace("getImageById({})", id);
+    return dao.getImageById(id);
+  }
+
+
   @Override
   public Stream<HorseListDto> allHorses() {
     LOG.trace("allHorses()");
@@ -69,6 +87,32 @@ public class HorseServiceImpl implements HorseService {
     }
     return horses.stream()
         .map(horse -> mapper.entityToListDto(horse, ownerMap));
+  }
+
+
+  @Override
+  public HorseDetailDto create(HorseCreateDto horse, MultipartFile image) throws ValidationException, ConflictException {
+    LOG.trace("create({})", horse);
+
+    validator.validateForCreate(horse);
+
+    HorseImageDto horseImage = new HorseImageDto(null, null);
+    if (image != null && !image.isEmpty()) {
+      try {
+        horseImage = new HorseImageDto(
+            image.getBytes(),
+            image.getContentType()
+        );
+      } catch (IOException e) {
+        LOG.error("Error while processing the image", e);
+        throw new RuntimeException("Error while processing the image", e);
+      }
+    }
+
+    var createdHorse = dao.create(horse, horseImage);
+    return mapper.entityToDetailDto(
+        createdHorse,
+        ownerMapForSingleId(createdHorse.ownerId()));
   }
 
 
@@ -99,48 +143,10 @@ public class HorseServiceImpl implements HorseService {
   }
 
 
-  // TODO
   @Override
-  public HorseDetailDto create(HorseCreateDto horse, MultipartFile image) throws ValidationException, ConflictException {
-    LOG.trace("create({})", horse);
-
-    validator.validateForCreate(horse);
-
-    HorseImageDto horseImage = new HorseImageDto(null, null);
-    if (image != null && !image.isEmpty()) {
-      try {
-        horseImage = new HorseImageDto(
-            image.getBytes(),
-            image.getContentType()
-        );
-      } catch (IOException e) {
-        LOG.error("Error while processing the image", e);
-        throw new RuntimeException("Error while processing the image", e);
-      }
-    }
-
-    var createdHorse = dao.create(horse, horseImage);
-    return mapper.entityToDetailDto(
-        createdHorse,
-        ownerMapForSingleId(createdHorse.ownerId()));
-  }
-
-
-  @Override
-  public HorseDetailDto getById(long id) throws NotFoundException {
-    LOG.trace("details({})", id);
-    Horse horse = dao.getById(id);
-    return mapper.entityToDetailDto(
-        horse,
-        ownerMapForSingleId(horse.ownerId()));
-  }
-
-
-  // TODO
-  @Override
-  public HorseImageDto getImageById(long id) throws NotFoundException {
-    LOG.trace("getImageById({})", id);
-    return dao.getImageById(id);
+  public void delete(long id) throws NotFoundException {
+    LOG.trace("delete({})", id);
+    dao.delete(id);
   }
 
 

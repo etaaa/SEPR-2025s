@@ -14,6 +14,18 @@ import java.util.List;
  * Implements access functionality to the application's persistent data store regarding horses.
  */
 public interface HorseDao {
+
+  /**
+   * Get a horse by its ID from the persistent data store.
+   *
+   * @param id the ID of the horse to get
+   * @return the horse
+   * @throws NotFoundException if the Horse with the given ID does not exist in the persistent data store
+   */
+  Horse getById(long id) throws NotFoundException;
+
+  HorseImageDto getImageById(long id) throws NotFoundException;
+
   /**
    * Get all horses stored in the persistent data store.
    *
@@ -21,6 +33,7 @@ public interface HorseDao {
    */
   List<Horse> getAll();
 
+  Horse create(HorseCreateDto horse, HorseImageDto horseImage);
 
   /**
    * Update the horse with the ID given in {@code horse}
@@ -33,22 +46,6 @@ public interface HorseDao {
    */
   Horse update(HorseUpdateDto horse, HorseImageDto horseImage) throws NotFoundException;
 
-
-  // TODO
-  Horse create(HorseCreateDto horse, HorseImageDto horseImage);
-
-
-  /**
-   * Get a horse by its ID from the persistent data store.
-   *
-   * @param id the ID of the horse to get
-   * @return the horse
-   * @throws NotFoundException if the Horse with the given ID does not exist in the persistent data store
-   */
-  Horse getById(long id) throws NotFoundException;
-
-
-  // TODO
-  HorseImageDto getImageById(long id) throws NotFoundException;
+  void delete(long id) throws NotFoundException;
 
 }

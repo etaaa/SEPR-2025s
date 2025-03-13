@@ -54,7 +54,6 @@ public class HorseValidator {
   }
 
 
-  // TODO
   public void validateForCreate(HorseCreateDto horse) throws ValidationException, ConflictException {
     LOG.trace("validateForCreate({})", horse);
     List<String> validationErrors = new ArrayList<>();

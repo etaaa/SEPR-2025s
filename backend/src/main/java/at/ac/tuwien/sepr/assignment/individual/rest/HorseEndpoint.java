@@ -21,6 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -85,6 +87,50 @@ public class HorseEndpoint {
   }
 
 
+  @GetMapping("/{id}/image")
+  public ResponseEntity<byte[]> getHorseImage(
+      @PathVariable("id") long id) {
+
+    LOG.info("GET image for horse with id {}", id);
+
+    try {
+      HorseImageDto horseImageDto = service.getImageById(id);
+      HttpHeaders headers = new HttpHeaders();
+      headers.setContentType(MediaType.parseMediaType(horseImageDto.mimeType()));
+      return new ResponseEntity<>(horseImageDto.image(), headers, HttpStatus.OK);
+    } catch (NotFoundException e) {
+      HttpStatus status = HttpStatus.NOT_FOUND;
+      logClientError(status, "Image for horse with ID " + id + " not found", e);
+      throw new ResponseStatusException(status, e.getMessage(), e);
+    }
+
+  }
+
+
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public HorseDetailDto create(
+      @ModelAttribute HorseCreateDto toCreate,
+      @RequestParam(value = "image", required = false) MultipartFile image)
+      throws ValidationException, ConflictException {
+
+    LOG.info("POST " + BASE_PATH + "/{}", toCreate);
+    LOG.debug("Body of request:\n{}", toCreate);
+
+    try {
+      return service.create(toCreate, image);
+    } catch (ValidationException e) {
+      HttpStatus status = HttpStatus.BAD_REQUEST;
+      logClientError(status, "Validation of Horse failed", e);
+      throw new ResponseStatusException(status, e.getMessage(), e);
+    } catch (ConflictException e) {
+      HttpStatus status = HttpStatus.CONFLICT;
+      logClientError(status, "Conflict with existing data", e);
+      throw new ResponseStatusException(status, e.getMessage(), e);
+    }
+
+  }
+
+
   /**
    * Updates the details of an existing horse, including an optional image file.
    *
@@ -124,49 +170,17 @@ public class HorseEndpoint {
   }
 
 
-  // TODO
-  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public HorseDetailDto create(
-      @ModelAttribute HorseCreateDto toCreate,
-      @RequestParam(value = "image", required = false) MultipartFile image)
-      throws ValidationException, ConflictException {
-
-    LOG.info("POST " + BASE_PATH + "/{}", toCreate);
-    LOG.debug("Body of request:\n{}", toCreate);
-
+  @DeleteMapping("{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void delete(@PathVariable("id") long id) {
+    LOG.info("DELETE " + BASE_PATH + "/{}", id);
     try {
-      return service.create(toCreate, image);
-    } catch (ValidationException e) {
-      HttpStatus status = HttpStatus.BAD_REQUEST;
-      logClientError(status, "Validation of Horse failed", e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-    } catch (ConflictException e) {
-      HttpStatus status = HttpStatus.CONFLICT;
-      logClientError(status, "Conflict with existing data", e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-    }
-
-  }
-
-
-  // TODO
-  @GetMapping("/{id}/image")
-  public ResponseEntity<byte[]> getHorseImage(
-      @PathVariable("id") long id) {
-
-    LOG.info("GET image for horse with id {}", id);
-
-    try {
-      HorseImageDto horseImageDto = service.getImageById(id);
-      HttpHeaders headers = new HttpHeaders();
-      headers.setContentType(MediaType.parseMediaType(horseImageDto.mimeType()));
-      return new ResponseEntity<>(horseImageDto.image(), headers, HttpStatus.OK);
+      service.delete(id);
     } catch (NotFoundException e) {
       HttpStatus status = HttpStatus.NOT_FOUND;
-      logClientError(status, "Image for horse with ID " + id + " not found", e);
+      logClientError(status, "Horse to delete not found", e);
       throw new ResponseStatusException(status, e.getMessage(), e);
     }
-
   }
 
 

@@ -17,6 +17,20 @@ import java.util.stream.Stream;
  * Service for working with horses.
  */
 public interface HorseService {
+
+  /**
+   * Get the horse with given ID, with more detail information.
+   * This includes the owner of the horse, and its parents.
+   * The parents of the parents are not included.
+   *
+   * @param id the ID of the horse to get
+   * @return the horse with ID {@code id}
+   * @throws NotFoundException if the horse with the given ID does not exist in the persistent data store
+   */
+  HorseDetailDto getById(long id) throws NotFoundException;
+
+  HorseImageDto getImageById(long id) throws NotFoundException;
+
   /**
    * Lists all horses stored in the system.
    *
@@ -24,6 +38,7 @@ public interface HorseService {
    */
   Stream<HorseListDto> allHorses();
 
+  HorseDetailDto create(HorseCreateDto horse, MultipartFile image) throws ValidationException, ConflictException;
 
   /**
    * Updates the horse with the ID given in {@code horse}
@@ -38,25 +53,6 @@ public interface HorseService {
    */
   HorseDetailDto update(HorseUpdateDto horse, MultipartFile image) throws NotFoundException, ValidationException, ConflictException;
 
-
-  /**
-   * Get the horse with given ID, with more detail information.
-   * This includes the owner of the horse, and its parents.
-   * The parents of the parents are not included.
-   *
-   * @param id the ID of the horse to get
-   * @return the horse with ID {@code id}
-   * @throws NotFoundException if the horse with the given ID does not exist in the persistent data store
-   */
-  HorseDetailDto getById(long id) throws NotFoundException;
-
-
-  // TODO
-  HorseImageDto getImageById(long id) throws NotFoundException;
-
-
-  // TODO
-  HorseDetailDto create(HorseCreateDto horse, MultipartFile image) throws ValidationException, ConflictException;
-
+  void delete(long id) throws NotFoundException;
 
 }

@@ -1,12 +1,12 @@
-import { Component, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { ToastrService } from 'ngx-toastr';
-import { AutocompleteComponent } from 'src/app/component/autocomplete/autocomplete.component';
-import { HorseService } from 'src/app/service/horse.service';
-import { Horse } from 'src/app/dto/horse';
-import { Owner } from 'src/app/dto/owner';
-import { ConfirmDeleteDialogComponent } from 'src/app/component/confirm-delete-dialog/confirm-delete-dialog.component';
+import {Component, OnInit} from '@angular/core';
+import {FormsModule} from '@angular/forms';
+import {RouterLink} from '@angular/router';
+import {ToastrService} from 'ngx-toastr';
+import {AutocompleteComponent} from 'src/app/component/autocomplete/autocomplete.component';
+import {HorseService} from 'src/app/service/horse.service';
+import {Horse} from 'src/app/dto/horse';
+import {Owner} from 'src/app/dto/owner';
+import {ConfirmDeleteDialogComponent} from 'src/app/component/confirm-delete-dialog/confirm-delete-dialog.component';
 
 
 @Component({
@@ -29,7 +29,8 @@ export class HorseComponent implements OnInit {
   constructor(
     private service: HorseService,
     private notification: ToastrService,
-  ) { }
+  ) {
+  }
 
   ngOnInit(): void {
     this.reloadHorses();
@@ -63,8 +64,22 @@ export class HorseComponent implements OnInit {
     return horse.dateOfBirth.toLocaleDateString();
   }
 
-
   deleteHorse(horse: Horse) {
-    // TODO: delete the horse
+    if (horse.id) {
+      this.service.delete(horse.id)
+        .subscribe({
+          next: () => {
+            this.notification.success(`Horse ${horse.name} was deleted`, 'Success');
+            this.reloadHorses();
+          },
+          error: error => {
+            console.error('Error deleting horse', error);
+            const errorMessage = error.status === 0
+              ? 'Is the backend up?'
+              : error.message.message;
+            this.notification.error(errorMessage, `Could Not Delete Horse ${horse.name}`);
+          }
+        });
+    }
   }
 }

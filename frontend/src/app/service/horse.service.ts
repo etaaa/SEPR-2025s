@@ -70,6 +70,12 @@ export class HorseService {
     );
   }
 
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(
+      `${baseUri}/${id}`
+    );
+  }
+
   private fixHorseDate(horse: Horse): Horse {
     // Parse the string to a Date
     horse.dateOfBirth = new Date(horse.dateOfBirth as unknown as string);
