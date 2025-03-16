@@ -1,6 +1,7 @@
 package at.ac.tuwien.sepr.assignment.individual.dto;
 
 import at.ac.tuwien.sepr.assignment.individual.type.Sex;
+
 import java.time.LocalDate;
 
 /**
@@ -14,7 +15,8 @@ public record HorseUpdateDto(
     LocalDate dateOfBirth,
     Sex sex,
     Long ownerId,
+    Long motherId,
+    Long fatherId,
     Boolean deleteImage
 ) {
-
 }

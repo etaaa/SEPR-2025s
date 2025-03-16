@@ -61,12 +61,11 @@ public class HorseEndpoint {
    * @return a stream of {@link HorseListDto} matching the search criteria
    */
   @GetMapping
-  public Stream<HorseListDto> searchHorses(HorseSearchDto searchParameters) {
+  public Stream<HorseListDto> search(HorseSearchDto searchParameters) {
     LOG.info("GET " + BASE_PATH);
     LOG.debug("request parameters: {}", searchParameters);
-    // TODO We have the request params in the DTO now, but don't do anything with them yet…
-
-    return service.allHorses();
+    System.out.println(searchParameters);
+    return service.search(searchParameters);
   }
 
   /**

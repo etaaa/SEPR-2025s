@@ -35,7 +35,7 @@ public class HorseServiceTest {
    */
   @Test
   public void getAllReturnsAllStoredHorses() {
-    List<HorseListDto> horses = horseService.allHorses()
+    List<HorseListDto> horses = horseService.search(null)
         .toList();
 
     assertThat(horses.size()).isGreaterThanOrEqualTo(1); // TODO: Adapt to exact number of test data entries
@@ -56,6 +56,8 @@ public class HorseServiceTest {
         "A test horse description",
         LocalDate.of(2020, 1, 1),
         Sex.MALE,
+        null,
+        null,
         null
     );
     HorseImageDto imageDto = new HorseImageDto(
@@ -112,6 +114,8 @@ public class HorseServiceTest {
         "Description",
         LocalDate.of(2020, 1, 1),
         Sex.MALE,
+        null,
+        null,
         null
     );
     HorseImageDto imageDto = new HorseImageDto(

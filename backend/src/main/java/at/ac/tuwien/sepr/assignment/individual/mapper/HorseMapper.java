@@ -67,8 +67,10 @@ public class HorseMapper {
         horse.dateOfBirth(),
         horse.sex(),
         getOwner(horse, owners),
+        horse.motherId(),
+        horse.fatherId(),
         horse.imageUrl()
-    );
+        );
   }
 
   private OwnerDto getOwner(Horse horse, Map<Long, OwnerDto> owners) {

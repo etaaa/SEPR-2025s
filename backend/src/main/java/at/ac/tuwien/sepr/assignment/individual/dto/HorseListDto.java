@@ -17,3 +17,5 @@ public record HorseListDto(
     String imageUrl
 ) {
 }
+
+// TODO: not up to date

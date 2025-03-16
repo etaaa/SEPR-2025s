@@ -4,6 +4,7 @@ import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseListDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
@@ -18,6 +19,7 @@ import at.ac.tuwien.sepr.assignment.individual.service.OwnerService;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -70,19 +72,23 @@ public class HorseServiceImpl implements HorseService {
 
 
   @Override
-  public Stream<HorseListDto> allHorses() {
-    LOG.trace("allHorses()");
-    var horses = dao.getAll();
-    var ownerIds = horses.stream()
+  public Stream<HorseListDto> search(HorseSearchDto searchParameters) {
+    LOG.trace("search({})", searchParameters);
+
+    List<Horse> horses = dao.search(searchParameters);
+
+    var ownerIds = horses.stream() // Extract all owner IDs
         .map(Horse::ownerId)
         .filter(Objects::nonNull)
         .collect(Collectors.toUnmodifiableSet());
-    Map<Long, OwnerDto> ownerMap;
+
+    Map<Long, OwnerDto> ownerMap; // Getting owner data by ID
     try {
       ownerMap = ownerService.getAllById(ownerIds);
     } catch (NotFoundException e) {
-      throw new FatalException("Horse, that is already persisted, refers to non-existing owner", e);
+      throw new FatalException("A persisted Horse refers to a non-existing Owner", e);
     }
+
     return horses.stream()
         .map(horse -> mapper.entityToListDto(horse, ownerMap));
   }

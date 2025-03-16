@@ -5,6 +5,7 @@ import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseListDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.exception.ConflictException;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
@@ -37,12 +38,7 @@ public interface HorseService {
    */
   HorseImageDto getImageById(long id) throws NotFoundException;
 
-  /**
-   * Lists all horses stored in the system.
-   *
-   * @return list of all stored horses
-   */
-  Stream<HorseListDto> allHorses();
+  Stream<HorseListDto> search(HorseSearchDto searchParameters);
 
   /**
    * Creates a new horse entry in the system with the provided data and optional image.

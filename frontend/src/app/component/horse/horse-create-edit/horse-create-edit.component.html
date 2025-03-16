@@ -1,6 +1,5 @@
 <h1 class="display-1">{{ heading }}</h1>
 
-
 <form #form="ngForm" (ngSubmit)="onSubmit(form)">
   <div class="row">
     <div class="mb-2 col-lg-6">
@@ -88,6 +87,43 @@
     </div>
   </div>
 
+  <div class="row">
+    <div class="mb-2 col-lg-6">
+      <div class="row">
+        <label for="horseMother" class="col-form-label text-md-end text-muted col-md-2 col-lg-4">
+          Mother
+        </label>
+        <app-autocomplete
+          id="horseMother"
+          name="horseMother"
+          class="col-md-10 col-lg-8"
+          textInputClass="form-control"
+          valueNeedsToMatchSuggestion="true"
+          [(ngModel)]="horse.mother"
+          [formatModel]="formatMotherName"
+          [suggestions]="motherSuggestions">
+        </app-autocomplete>
+      </div>
+    </div>
+
+    <div class="mb-2 col-lg-6">
+      <div class="row">
+        <label for="horseMother" class="col-form-label text-md-end text-muted col-md-2 col-lg-4">
+          Father
+        </label>
+        <app-autocomplete
+          id="horseFather"
+          name="horseFather"
+          class="col-md-10 col-lg-8"
+          textInputClass="form-control"
+          valueNeedsToMatchSuggestion="true"
+          [(ngModel)]="horse.father"
+          [formatModel]="formatFatherName"
+          [suggestions]="fatherSuggestions">
+        </app-autocomplete>
+      </div>
+    </div>
+  </div>
 
   <div class="row mb-2">
     <label for="horseDescription" class="col-form-label text-md-end text-muted col-md-2">
@@ -102,7 +138,6 @@
         </textarea>
     </div>
   </div>
-
 
   <div class="row mb-2">
     <label class="col-form-label text-md-end text-muted col-md-2">
@@ -122,7 +157,6 @@
         (click)="fileInput.click()">
         Choose File
       </button>
-
       <div *ngIf="imageSrc" class="mt-3">
         <img [src]="imageSrc" alt="Horse image preview" class="img-fluid" style="max-height: 300px;">
         <div class="mt-2">
@@ -131,7 +165,6 @@
       </div>
     </div>
   </div>
-
 
   <div class="mt-4 d-flex flex-row">
     <button

@@ -31,6 +31,7 @@ public class HorseValidator {
    * @throws ConflictException   if conflicts with existing data are detected
    */
   public void validateForUpdate(HorseUpdateDto horse) throws ValidationException, ConflictException {
+    // TODO: check for valid mother and father and owner
     LOG.trace("validateForUpdate({})", horse);
     List<String> validationErrors = new ArrayList<>();
 

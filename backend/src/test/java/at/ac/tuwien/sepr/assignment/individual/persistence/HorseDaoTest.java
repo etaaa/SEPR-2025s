@@ -35,7 +35,7 @@ public class HorseDaoTest {
    */
   @Test
   public void getAllReturnsAllStoredHorses() {
-    List<Horse> horses = horseDao.getAll();
+    List<Horse> horses = horseDao.search(null);
     assertThat(horses.size()).isGreaterThanOrEqualTo(1); // TODO adapt to exact number of elements in test data later
     assertThat(horses)
         .extracting(Horse::id, Horse::name)
@@ -68,6 +68,8 @@ public class HorseDaoTest {
         "Test Description",
         LocalDate.of(2020, 1, 1),
         Sex.MALE,
+        null,
+        null,
         null
     );
     HorseImageDto imageDto = new HorseImageDto(
@@ -110,6 +112,8 @@ public class HorseDaoTest {
         "Updated Description",
         LocalDate.of(2020, 1, 1),
         Sex.FEMALE,
+        null,
+        null,
         null,
         false
     );

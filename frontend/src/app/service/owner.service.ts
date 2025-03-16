@@ -19,6 +19,6 @@ export class OwnerService {
     const params = new HttpParams()
       .set('name', name)
       .set('maxAmount', limitTo);
-    return this.http.get<Owner[]>(baseUri, { params });
+    return this.http.get<Owner[]>(baseUri, {params});
   }
 }

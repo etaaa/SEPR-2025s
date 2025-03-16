@@ -3,6 +3,7 @@ package at.ac.tuwien.sepr.assignment.individual.persistence;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Owner;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
+
 import java.util.Collection;
 
 /**
@@ -30,11 +31,11 @@ public interface OwnerDao {
 
   /**
    * Search for owners matching the criteria in {@code searchParameters}.
-   * 
+   *
    * <p>
    * A owner is considered matched, if its name contains {@code searchParameters.name} as a substring.
    * The returned stream of owners never contains more than {@code searchParameters.maxAmount} elements,
-   *  even if there would be more matches in the persistent data store.
+   * even if there would be more matches in the persistent data store.
    * </p>
    *
    * @param searchParameters object containing the search parameters to match

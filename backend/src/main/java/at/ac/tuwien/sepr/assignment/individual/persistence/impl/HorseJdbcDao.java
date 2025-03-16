@@ -2,6 +2,7 @@ package at.ac.tuwien.sepr.assignment.individual.persistence.impl;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
 import at.ac.tuwien.sepr.assignment.individual.exception.FatalException;
@@ -12,7 +13,9 @@ import at.ac.tuwien.sepr.assignment.individual.type.Sex;
 import java.lang.invoke.MethodHandles;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +35,7 @@ public class HorseJdbcDao implements HorseDao {
   private static final String TABLE_NAME = "horse";
 
   private static final String SQL_SELECT_BY_ID =
-      "SELECT id, name, description, date_of_birth, sex, owner_id, "
+      "SELECT id, name, description, date_of_birth, sex, owner_id, mother_id, father_id, "
           + "CASE WHEN image IS NOT NULL THEN 1 ELSE 0 END AS has_image "
           + "FROM " + TABLE_NAME
           + " WHERE id = :id";
@@ -42,14 +45,19 @@ public class HorseJdbcDao implements HorseDao {
           + " WHERE ID = :id";
 
   private static final String SQL_SELECT_ALL =
-      "SELECT id, name, description, date_of_birth, sex, owner_id, "
+      "SELECT id, name, description, date_of_birth, sex, owner_id, mother_id, father_id, "
           + "CASE WHEN image IS NOT NULL THEN 1 ELSE 0 END AS has_image "
           + "FROM " + TABLE_NAME;
 
+  private static final String SQL_SELECT_SEARCH_LIMIT_CLAUSE = " LIMIT :limit";
+
+  private static final String SQL_SELECT_SEARCH_PARENTS_CLAUSE =
+      " WHERE sex = :sex AND id <> :excludeId";
+
   private static final String SQL_INSERT =
       "INSERT INTO " + TABLE_NAME
-          + " (name, description, date_of_birth, sex, owner_id, image, mime_type) "
-          + "VALUES (:name, :description, :date_of_birth, :sex, :owner_id, :image, :mime_type)";
+          + " (name, description, date_of_birth, sex, owner_id, mother_id, father_id, image, mime_type) "
+          + "VALUES (:name, :description, :date_of_birth, :sex, :owner_id, :mother_id, :father_id, :image, :mime_type)";
 
   private static final String SQL_UPDATE =
       "UPDATE " + TABLE_NAME
@@ -59,6 +67,8 @@ public class HorseJdbcDao implements HorseDao {
                   date_of_birth = :date_of_birth,
                   sex = :sex,
                   owner_id = :owner_id,
+                  mother_id = :mother_id,
+                  father_id = :father_id,
                   image = :image,
                   mime_type = :mime_type
               WHERE id = :id
@@ -112,16 +122,25 @@ public class HorseJdbcDao implements HorseDao {
     return images.get(0);
   }
 
-
   @Override
-  public List<Horse> getAll() {
-    LOG.trace("getAll()");
+  public List<Horse> search(HorseSearchDto searchParameters) {
+    LOG.trace("search({})", searchParameters);
+    var query = SQL_SELECT_ALL;
+
+    Map<String, Object> params = new HashMap<>();
+    if (searchParameters.limit() != null && searchParameters.sex() != null && searchParameters.excludeId() != null) {
+      params.put("limit", searchParameters.limit());
+      params.put("sex", searchParameters.sex().toString());
+      params.put("excludeId", searchParameters.excludeId());
+      query += SQL_SELECT_SEARCH_PARENTS_CLAUSE;
+    }
+
     return jdbcClient
-        .sql(SQL_SELECT_ALL)
+        .sql(query)
+        .params(params)
         .query(this::mapRow)
         .list();
   }
-
 
   @Override
   public Horse create(HorseCreateDto horse, HorseImageDto horseImage) {
@@ -135,6 +154,8 @@ public class HorseJdbcDao implements HorseDao {
         .param("date_of_birth", horse.dateOfBirth())
         .param("sex", horse.sex().toString())
         .param("owner_id", horse.ownerId())
+        .param("mother_id", horse.motherId())
+        .param("father_id", horse.fatherId())
         .param("image", horseImage == null ? null : horseImage.image())
         .param("mime_type", horseImage == null ? null : horseImage.mimeType())
         .update(keyHolder);
@@ -152,6 +173,8 @@ public class HorseJdbcDao implements HorseDao {
         horse.dateOfBirth(),
         horse.sex(),
         horse.ownerId(),
+        horse.motherId(),
+        horse.fatherId(),
         horseImage == null ? null : "/horses/" + id + "/image"
     );
   }
@@ -172,6 +195,8 @@ public class HorseJdbcDao implements HorseDao {
         .param("date_of_birth", horse.dateOfBirth())
         .param("sex", horse.sex().toString())
         .param("owner_id", horse.ownerId())
+        .param("mother_id", horse.motherId())
+        .param("father_id", horse.fatherId())
         .param("image", horseImage == null ? null : horseImage.image())
         .param("mime_type", horseImage == null ? null : horseImage.mimeType())
         .update();
@@ -189,6 +214,8 @@ public class HorseJdbcDao implements HorseDao {
         horse.dateOfBirth(),
         horse.sex(),
         horse.ownerId(),
+        horse.motherId(),
+        horse.fatherId(),
         horseImage == null ? null : "/horses/" + horse.id() + "/image"
     );
   }
@@ -221,6 +248,8 @@ public class HorseJdbcDao implements HorseDao {
         result.getDate("date_of_birth").toLocalDate(),
         Sex.valueOf(result.getString("sex")),
         result.getObject("owner_id", Long.class),
+        result.getObject("mother_id", Long.class),
+        result.getObject("father_id", Long.class),
         imageUrl
     );
   }

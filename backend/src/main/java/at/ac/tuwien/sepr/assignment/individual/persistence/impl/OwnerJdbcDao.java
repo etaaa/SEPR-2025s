@@ -35,7 +35,7 @@ public class OwnerJdbcDao implements OwnerDao {
 
   private static final String SQL_SELECT_SEARCH =
       "SELECT * FROM " + TABLE_NAME
-          + " WHERE UPPER(name) LIKE UPPER('%%' || COALESCE(:name, '') || '%%')";
+          + " WHERE UPPER(first_name || ' ' || last_name) LIKE UPPER('%%' || COALESCE(:name, '') || '%%')";
 
   private static final String SQL_SELECT_SEARCH_LIMIT_CLAUSE = " LIMIT :limit";
 
@@ -100,7 +100,8 @@ public class OwnerJdbcDao implements OwnerDao {
   private Owner mapRow(ResultSet resultSet, int i) throws SQLException {
     return new Owner(
         resultSet.getLong("id"),
-        resultSet.getString("name"),
+        resultSet.getString("first_name"),
+        resultSet.getString("last_name"),
         resultSet.getString("description"));
   }
 }

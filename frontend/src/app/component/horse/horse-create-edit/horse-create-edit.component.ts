@@ -129,6 +129,14 @@ export class HorseCreateEditComponent implements OnInit {
     ? of([])
     : this.ownerService.searchByName(input, 5);
 
+  motherSuggestions = (input: string) => (input === '')
+    ? of([])
+    : this.service.searchByName(input, 5, 'FEMALE', this.horse.id!);
+
+  fatherSuggestions = (input: string) => (input === '')
+    ? of([])
+    : this.service.searchByName(input, 5, 'MALE', this.horse.id!);
+
   ngOnInit(): void {
     this.route.data.subscribe(data => {
       this.mode = data.mode;
@@ -161,9 +169,20 @@ export class HorseCreateEditComponent implements OnInit {
   public formatOwnerName(owner: Owner | null | undefined): string {
     return (owner == null)
       ? ''
-      : owner.name;
+      : `${owner.firstName} ${owner.lastName}`;
   }
 
+  public formatMotherName(mother: Horse | null | undefined): string {
+    return (mother == null)
+      ? ''
+      : mother.name;
+  }
+
+  public formatFatherName(father: Horse | null | undefined): string {
+    return (father == null)
+      ? ''
+      : father.name;
+  }
 
   public onSubmit(form: NgForm): void {
     console.log('is form valid?', form.valid, this.horse);
@@ -182,7 +201,12 @@ export class HorseCreateEditComponent implements OnInit {
       if (this.horse.owner && this.horse.owner.id) {
         formData.append('ownerId', this.horse.owner.id.toString());
       }
-
+      if (this.horse.mother && this.horse.mother.id) {
+        formData.append('motherId', this.horse.mother.id.toString());
+      }
+      if (this.horse.father && this.horse.father.id) {
+        formData.append('fatherId', this.horse.father.id.toString());
+      }
       if (this.mode === HorseCreateEditMode.create) {
         if (this.selectedFile) {
           formData.append('image', this.selectedFile, this.selectedFile.name);

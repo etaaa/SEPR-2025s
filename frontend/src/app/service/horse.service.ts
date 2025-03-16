@@ -1,9 +1,10 @@
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {map, Observable} from 'rxjs';
 import {environment} from 'src/environments/environment';
 import {Horse, HorseCreate} from '../dto/horse';
 import {formatIsoDate} from "../utils/date-helper";
+import {Owner} from "../dto/owner";
 
 
 const baseUri = environment.backendUrl + '/horses';
@@ -80,6 +81,15 @@ export class HorseService {
     // Parse the string to a Date
     horse.dateOfBirth = new Date(horse.dateOfBirth as unknown as string);
     return horse;
+  }
+
+  public searchByName(name: string, limit: number, sex: string, excludeId: number): Observable<Horse[]> {
+    const params = new HttpParams()
+      .set('name', name)
+      .set('limit', limit)
+      .set('sex', sex)
+      .set('excludeId', excludeId);
+    return this.http.get<Horse[]>(baseUri, {params});
   }
 
 }

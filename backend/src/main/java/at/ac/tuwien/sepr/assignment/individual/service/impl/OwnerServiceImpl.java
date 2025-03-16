@@ -6,12 +6,14 @@ import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
 import at.ac.tuwien.sepr.assignment.individual.mapper.OwnerMapper;
 import at.ac.tuwien.sepr.assignment.individual.persistence.OwnerDao;
 import at.ac.tuwien.sepr.assignment.individual.service.OwnerService;
+
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

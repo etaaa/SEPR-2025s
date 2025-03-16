@@ -15,6 +15,9 @@ public record HorseSearchDto(
     LocalDate bornBefore,
     Sex sex,
     String ownerName,
+    Long excludeId,
     Integer limit
 ) {
 }
+
+// TODO: not up to date

@@ -3,6 +3,7 @@ package at.ac.tuwien.sepr.assignment.individual.persistence;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
@@ -33,12 +34,7 @@ public interface HorseDao {
    */
   HorseImageDto getImageById(long id) throws NotFoundException;
 
-  /**
-   * Get all horses stored in the persistent data store.
-   *
-   * @return a list of all stored horses
-   */
-  List<Horse> getAll();
+  List<Horse> search(HorseSearchDto searchParameters);
 
   /**
    * Creates a new horse in the persistent data store.

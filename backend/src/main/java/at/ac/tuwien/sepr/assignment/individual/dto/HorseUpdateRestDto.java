@@ -14,11 +14,13 @@ public record HorseUpdateRestDto(
     LocalDate dateOfBirth,
     Sex sex,
     Long ownerId,
+    Long motherId,
+    Long fatherId,
     Boolean deleteImage
 ) {
 
   public HorseUpdateDto toUpdateDtoWithId(Long id) {
-    return new HorseUpdateDto(id, name, description, dateOfBirth, sex, ownerId, deleteImage);
+    return new HorseUpdateDto(id, name, description, dateOfBirth, sex, ownerId, motherId, fatherId, deleteImage);
   }
 
 }
