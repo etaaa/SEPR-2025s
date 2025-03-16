@@ -13,7 +13,8 @@ public record HorseUpdateDto(
     String description,
     LocalDate dateOfBirth,
     Sex sex,
-    Long ownerId
+    Long ownerId,
+    Boolean deleteImage
 ) {
 
 }

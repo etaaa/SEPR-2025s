@@ -6,7 +6,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseListDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +63,7 @@ public class HorseEndpointTest {
     List<HorseListDto> horseResult = objectMapper.readerFor(HorseListDto.class).<HorseListDto>readValues(body).readAll();
 
     assertThat(horseResult).isNotNull();
-    assertThat(horseResult.size()).isGreaterThanOrEqualTo(1); // TODO: Adapt this to the exact number in the test data later
+    assertThat(horseResult.size()).isGreaterThanOrEqualTo(1); // We keep this 1 because of the delete test running in parallel
     assertThat(horseResult)
         .extracting(HorseListDto::id, HorseListDto::name)
         .contains(tuple(-1L, "Wendy"));
@@ -79,4 +81,25 @@ public class HorseEndpointTest {
             .get("/asdf123")
         ).andExpect(status().isNotFound());
   }
+
+  /**
+   * Tests deleting an existing horse by its ID.
+   *
+   * @throws Exception if the request fails
+   */
+  @Test
+  public void deletingExistingHorseReturnsNoContentAndRemovesHorse() throws Exception {
+    mockMvc
+        .perform(MockMvcRequestBuilders
+            .delete("/horses/-2")
+            .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNoContent());
+
+    mockMvc
+        .perform(MockMvcRequestBuilders
+            .get("/horses/-2")
+            .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound());
+  }
+
 }

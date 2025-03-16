@@ -9,7 +9,6 @@ import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.exception.ConflictException;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
 import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.stream.Stream;
 
@@ -29,6 +28,13 @@ public interface HorseService {
    */
   HorseDetailDto getById(long id) throws NotFoundException;
 
+  /**
+   * Retrieves the image associated with a horse by its unique identifier.
+   *
+   * @param id the unique identifier of the horse whose image is to be retrieved
+   * @return a {@link HorseImageDto} containing the image data and MIME type
+   * @throws NotFoundException if no horse with the specified {@code id} exists or if it has no associated image
+   */
   HorseImageDto getImageById(long id) throws NotFoundException;
 
   /**
@@ -38,21 +44,35 @@ public interface HorseService {
    */
   Stream<HorseListDto> allHorses();
 
-  HorseDetailDto create(HorseCreateDto horse, MultipartFile image) throws ValidationException, ConflictException;
+  /**
+   * Creates a new horse entry in the system with the provided data and optional image.
+   *
+   * @param horse the {@link HorseCreateDto} containing the horse's creation details
+   * @param image the {@link HorseImageDto} containing the optional image data and MIME type, or null if no image is provided
+   * @return a {@link HorseDetailDto} representing the newly created horse
+   * @throws ValidationException if the provided {@code horse} data is invalid (e.g., missing required fields, invalid dates)
+   * @throws ConflictException   if the creation conflicts with existing data (e.g., duplicate horse identifiers)
+   */
+  HorseDetailDto create(HorseCreateDto horse, HorseImageDto image) throws ValidationException, ConflictException;
 
   /**
-   * Updates the horse with the ID given in {@code horse}
-   * with the data given in {@code horse}
-   * in the persistent data store.
+   * Updates an existing horse in the system with the provided data and optional image.
    *
-   * @param horse the horse to update
-   * @return he updated horse
-   * @throws NotFoundException   if the horse with given ID does not exist in the persistent data store
-   * @throws ValidationException if the update data given for the horse is in itself incorrect (description too long, no name, …)
-   * @throws ConflictException   if the update data given for the horse is in conflict the data currently in the system (owner does not exist, …)
+   * @param horse the {@link HorseUpdateDto} containing the updated horse details, including the ID of the horse to update
+   * @param image the {@link HorseImageDto} containing the new image data and MIME type, or null if the image is unchanged or to be deleted
+   * @return a {@link HorseDetailDto} representing the updated horse
+   * @throws NotFoundException   if no horse with the ID specified in {@code horse} exists in the persistent data store
+   * @throws ValidationException if the provided {@code horse} data is invalid (e.g., missing required fields, description too long)
+   * @throws ConflictException   if the update conflicts with existing data (e.g., owner does not exist)
    */
-  HorseDetailDto update(HorseUpdateDto horse, MultipartFile image) throws NotFoundException, ValidationException, ConflictException;
+  HorseDetailDto update(HorseUpdateDto horse, HorseImageDto image) throws NotFoundException, ValidationException, ConflictException;
 
+  /**
+   * Deletes a horse from the system by its unique identifier.
+   *
+   * @param id the unique identifier of the horse to delete
+   * @throws NotFoundException if no horse with the specified {@code id} exists in the persistent data store
+   */
   void delete(long id) throws NotFoundException;
 
 }

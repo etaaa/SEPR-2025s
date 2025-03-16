@@ -1,6 +1,7 @@
 package at.ac.tuwien.sepr.assignment.individual.dto;
 
 import at.ac.tuwien.sepr.assignment.individual.type.Sex;
+
 import java.time.LocalDate;
 
 /**
@@ -12,11 +13,12 @@ public record HorseUpdateRestDto(
     String description,
     LocalDate dateOfBirth,
     Sex sex,
-    Long ownerId
+    Long ownerId,
+    Boolean deleteImage
 ) {
 
   public HorseUpdateDto toUpdateDtoWithId(Long id) {
-    return new HorseUpdateDto(id, name, description, dateOfBirth, sex, ownerId);
+    return new HorseUpdateDto(id, name, description, dateOfBirth, sex, ownerId, deleteImage);
   }
 
 }

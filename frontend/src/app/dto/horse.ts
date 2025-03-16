@@ -25,6 +25,16 @@ export interface HorseCreate {
   imageUrl?: string;
 }
 
+export interface HorseUpdate {
+  name: string;
+  description?: string;
+  dateOfBirth: Date;
+  sex: Sex;
+  owner?: Owner;
+  imageUrl?: string;
+  deleteImage?: boolean;
+}
+
 export function convertFromHorseToCreate(horse: Horse): HorseCreate {
   return {
     name: horse.name,

@@ -2,7 +2,9 @@ package at.ac.tuwien.sepr.assignment.individual.rest;
 
 
 import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
+
 import java.lang.invoke.MethodHandles;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
  * Central exception handler for REST controllers, mapping exceptions to HTTP responses.
@@ -32,5 +35,18 @@ public class ApplicationExceptionHandler {
     return new ValidationErrorRestDto(e.summary(), e.errors());
   }
 
+  /**
+   * Handles {@link MaxUploadSizeExceededException} and returns a response with HTTP status 413 (Payload Too Large).
+   *
+   * @param e the exception indicating that the uploaded file exceeds the maximum allowed size.
+   * @return an {@link ErrorDto} containing a generic error message.
+   */
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  @ResponseStatus(HttpStatus.CREATED)
+  @ResponseBody
+  public ErrorDto handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+    LOG.warn("Upload size exceeded: {}", e.getMessage());
+    return new ErrorDto("The uploaded file exceeds the maximum allowed size.");
+  }
 
 }

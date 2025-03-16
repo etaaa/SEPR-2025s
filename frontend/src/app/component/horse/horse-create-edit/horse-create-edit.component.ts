@@ -1,4 +1,5 @@
 import {Component, OnInit} from '@angular/core';
+import {CommonModule} from '@angular/common';
 import {FormsModule, NgForm, NgModel} from '@angular/forms';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ToastrService} from 'ngx-toastr';
@@ -11,16 +12,20 @@ import {ErrorFormatterService} from 'src/app/service/error-formatter.service';
 import {HorseService} from 'src/app/service/horse.service';
 import {OwnerService} from 'src/app/service/owner.service';
 import {formatIsoDate} from "../../../utils/date-helper";
+import {environment} from "../../../../environments/environment";
 
 export enum HorseCreateEditMode {
   create,
   edit
 }
 
+const baseUri = environment.backendUrl;
+
 @Component({
   selector: 'app-horse-create-edit',
   templateUrl: './horse-create-edit.component.html',
   imports: [
+    CommonModule,
     FormsModule,
     AutocompleteComponent,
     FormsModule
@@ -33,11 +38,14 @@ export class HorseCreateEditComponent implements OnInit {
   mode: HorseCreateEditMode = HorseCreateEditMode.create;
   horse: Horse = {
     name: '',
-    description: '',
+    //description: '',
     dateOfBirth: new Date(),
     sex: Sex.female,
   };
   horseBirthDateIsSet = false;
+  selectedFile: File | null = null;
+  imageSrc: string | null = null;
+  deleteImageOnSubmit = false;
 
 
   constructor(
@@ -131,6 +139,9 @@ export class HorseCreateEditComponent implements OnInit {
             next: horse => {
               this.horse = horse;
               this.horseBirthDateIsSet = true;
+              if (horse.imageUrl) {
+                this.imageSrc = baseUri + horse.imageUrl;
+              }
             },
             error: err => {
               console.error('Error loading horse', err);
@@ -171,8 +182,16 @@ export class HorseCreateEditComponent implements OnInit {
       if (this.horse.owner && this.horse.owner.id) {
         formData.append('ownerId', this.horse.owner.id.toString());
       }
-      if (this.selectedFile) {
-        formData.append('image', this.selectedFile, this.selectedFile.name);
+
+      if (this.mode === HorseCreateEditMode.create) {
+        if (this.selectedFile) {
+          formData.append('image', this.selectedFile, this.selectedFile.name);
+        }
+      } else {
+        if (this.selectedFile) {
+          formData.append('image', this.selectedFile, this.selectedFile.name);
+        }
+        formData.append('deleteImage', this.deleteImageOnSubmit.toString());
       }
 
       let observable: Observable<Horse>;
@@ -204,12 +223,25 @@ export class HorseCreateEditComponent implements OnInit {
   }
 
 
-  selectedFile: File | null = null;
-
   public onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       this.selectedFile = input.files[0];
+      this.deleteImageOnSubmit = false;
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.imageSrc = e.target.result;
+      };
+      reader.readAsDataURL(this.selectedFile);
+    }
+  }
+
+  public deleteImage(): void {
+    this.selectedFile = null;
+    this.imageSrc = null;
+    if (this.mode === HorseCreateEditMode.edit) {
+      this.deleteImageOnSubmit = true;
+      this.horse.imageUrl = undefined;
     }
   }
 

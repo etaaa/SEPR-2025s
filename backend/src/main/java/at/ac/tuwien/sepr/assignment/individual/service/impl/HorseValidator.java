@@ -20,8 +20,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class HorseValidator {
-  private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   /**
    * Validates a horse before updating, ensuring all fields meet constraints and checking for conflicts.
@@ -47,13 +47,24 @@ public class HorseValidator {
       }
     }
 
+    if (horse.deleteImage() == null) {
+      validationErrors.add("Delete image cannot be null");
+    }
+
     if (!validationErrors.isEmpty()) {
       throw new ValidationException("Validation of horse for update failed", validationErrors);
     }
 
   }
 
-
+  /**
+   * Validates horse data before a create operation.
+   * Ensures required fields are present and valid, such as name, date of birth, and sex.
+   *
+   * @param horse the {@link HorseCreateDto} containing the horse data to validate
+   * @throws ValidationException if the data is invalid (e.g., missing name, future birth date, missing sex)
+   * @throws ConflictException   if the data conflicts with existing system state (currently not implemented in this method)
+   */
   public void validateForCreate(HorseCreateDto horse) throws ValidationException, ConflictException {
     LOG.trace("validateForCreate({})", horse);
     List<String> validationErrors = new ArrayList<>();
@@ -89,6 +100,5 @@ public class HorseValidator {
     }
 
   }
-
 
 }

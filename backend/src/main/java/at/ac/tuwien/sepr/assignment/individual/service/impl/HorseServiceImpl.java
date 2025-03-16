@@ -16,7 +16,6 @@ import at.ac.tuwien.sepr.assignment.individual.persistence.HorseDao;
 import at.ac.tuwien.sepr.assignment.individual.service.HorseService;
 import at.ac.tuwien.sepr.assignment.individual.service.OwnerService;
 
-import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.Map;
@@ -28,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Implementation of {@link HorseService} for handling image storage and retrieval.
@@ -91,25 +89,12 @@ public class HorseServiceImpl implements HorseService {
 
 
   @Override
-  public HorseDetailDto create(HorseCreateDto horse, MultipartFile image) throws ValidationException, ConflictException {
+  public HorseDetailDto create(HorseCreateDto horse, HorseImageDto image) throws ValidationException, ConflictException {
     LOG.trace("create({})", horse);
 
     validator.validateForCreate(horse);
 
-    HorseImageDto horseImage = new HorseImageDto(null, null);
-    if (image != null && !image.isEmpty()) {
-      try {
-        horseImage = new HorseImageDto(
-            image.getBytes(),
-            image.getContentType()
-        );
-      } catch (IOException e) {
-        LOG.error("Error while processing the image", e);
-        throw new RuntimeException("Error while processing the image", e);
-      }
-    }
-
-    var createdHorse = dao.create(horse, horseImage);
+    var createdHorse = dao.create(horse, image);
     return mapper.entityToDetailDto(
         createdHorse,
         ownerMapForSingleId(createdHorse.ownerId()));
@@ -117,25 +102,12 @@ public class HorseServiceImpl implements HorseService {
 
 
   @Override
-  public HorseDetailDto update(HorseUpdateDto horse, MultipartFile image) throws NotFoundException, ValidationException, ConflictException {
+  public HorseDetailDto update(HorseUpdateDto horse, HorseImageDto image) throws NotFoundException, ValidationException, ConflictException {
     LOG.trace("update({})", horse);
 
     validator.validateForUpdate(horse);
 
-    HorseImageDto horseImage = new HorseImageDto(null, null);
-    if (image != null && !image.isEmpty()) {
-      try {
-        horseImage = new HorseImageDto(
-            image.getBytes(),
-            image.getContentType()
-        );
-      } catch (IOException e) {
-        LOG.error("Error while processing the image", e);
-        throw new RuntimeException("Error while processing the image", e);
-      }
-    }
-
-    var updatedHorse = dao.update(horse, horseImage);
+    var updatedHorse = dao.update(horse, image);
     return mapper.entityToDetailDto(
         updatedHorse,
         ownerMapForSingleId(updatedHorse.ownerId()));

@@ -11,6 +11,7 @@ import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
 import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
 import at.ac.tuwien.sepr.assignment.individual.service.HorseService;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.stream.Stream;
 
@@ -42,6 +43,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping(path = HorseEndpoint.BASE_PATH)
 public class HorseEndpoint {
+
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   static final String BASE_PATH = "/horses";
 
@@ -86,7 +88,13 @@ public class HorseEndpoint {
     }
   }
 
-
+  /**
+   * Retrieves the image associated with a horse.
+   *
+   * @param id the unique identifier of the horse whose image is requested
+   * @return a {@link ResponseEntity} containing the image as a byte array along with the proper MIME type header
+   * @throws ResponseStatusException with HTTP status 404 if the image or the horse is not found
+   */
   @GetMapping("/{id}/image")
   public ResponseEntity<byte[]> getHorseImage(
       @PathVariable("id") long id) {
@@ -106,7 +114,15 @@ public class HorseEndpoint {
 
   }
 
-
+  /**
+   * Creates a new horse with the provided details and an optional image.
+   *
+   * @param toCreate the data transfer object containing horse details for creation
+   * @param image    an optional image file for the horse; may be null or empty
+   * @return the details of the newly created horse as a {@link HorseDetailDto}
+   * @throws ResponseStatusException with HTTP status 400 if image processing or validation fails,
+   *                                 or with HTTP status 409 if there is a conflict with existing data.
+   */
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public HorseDetailDto create(
       @ModelAttribute HorseCreateDto toCreate,
@@ -116,8 +132,18 @@ public class HorseEndpoint {
     LOG.info("POST " + BASE_PATH + "/{}", toCreate);
     LOG.debug("Body of request:\n{}", toCreate);
 
+    HorseImageDto horseImage = null;
+    if (image != null && !image.isEmpty()) {
+      try {
+        horseImage = new HorseImageDto(image.getBytes(), image.getContentType());
+      } catch (IOException e) {
+        LOG.error("Error while processing the image", e);
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error while processing the image", e);
+      }
+    }
+
     try {
-      return service.create(toCreate, image);
+      return service.create(toCreate, horseImage);
     } catch (ValidationException e) {
       HttpStatus status = HttpStatus.BAD_REQUEST;
       logClientError(status, "Validation of Horse failed", e);
@@ -130,16 +156,16 @@ public class HorseEndpoint {
 
   }
 
-
   /**
    * Updates the details of an existing horse, including an optional image file.
    *
-   * @param id       the ID of the horse to update
-   * @param toUpdate the updated horse data
-   * @return the updated horse details
-   * @throws ValidationException     if validation fails
-   * @throws ConflictException       if a conflict occurs while updating
-   * @throws ResponseStatusException if the horse is not found
+   * @param id       the unique identifier of the horse to update
+   * @param toUpdate the data transfer object containing updated horse details
+   * @param image    an optional new image file for the horse; may be null or empty
+   * @return the updated horse details as a {@link HorseDetailDto}
+   * @throws ResponseStatusException with HTTP status 404 if the horse is not found,
+   *                                 with HTTP status 400 if validation fails or image processing fails,
+   *                                 or with HTTP status 409 if there is a conflict with existing data.
    */
   @PutMapping(path = "{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public HorseDetailDto update(
@@ -151,8 +177,18 @@ public class HorseEndpoint {
     LOG.info("PUT " + BASE_PATH + "/{}", toUpdate);
     LOG.debug("Body of request:\n{}", toUpdate);
 
+    HorseImageDto horseImage = null;
+    if (image != null && !image.isEmpty()) {
+      try {
+        horseImage = new HorseImageDto(image.getBytes(), image.getContentType());
+      } catch (IOException e) {
+        LOG.error("Error while processing the image", e);
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error while processing the image", e);
+      }
+    }
+
     try {
-      return service.update(toUpdate.toUpdateDtoWithId(id), image);
+      return service.update(toUpdate.toUpdateDtoWithId(id), horseImage);
     } catch (NotFoundException e) {
       HttpStatus status = HttpStatus.NOT_FOUND;
       logClientError(status, "Horse to update not found", e);
@@ -169,7 +205,12 @@ public class HorseEndpoint {
 
   }
 
-
+  /**
+   * Deletes the horse with the given unique identifier.
+   *
+   * @param id the unique identifier of the horse to delete
+   * @throws ResponseStatusException with HTTP status 404 if the horse is not found
+   */
   @DeleteMapping("{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable("id") long id) {
@@ -182,7 +223,6 @@ public class HorseEndpoint {
       throw new ResponseStatusException(status, e.getMessage(), e);
     }
   }
-
 
   /**
    * Logs client-side errors with relevant details.

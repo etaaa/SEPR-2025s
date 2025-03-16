@@ -135,8 +135,8 @@ public class HorseJdbcDao implements HorseDao {
         .param("date_of_birth", horse.dateOfBirth())
         .param("sex", horse.sex().toString())
         .param("owner_id", horse.ownerId())
-        .param("image", horseImage.image())
-        .param("mime_type", horseImage.mimeType())
+        .param("image", horseImage == null ? null : horseImage.image())
+        .param("mime_type", horseImage == null ? null : horseImage.mimeType())
         .update(keyHolder);
 
     if (rowsAffected == 0 || keyHolder.getKey() == null) {
@@ -152,7 +152,7 @@ public class HorseJdbcDao implements HorseDao {
         horse.dateOfBirth(),
         horse.sex(),
         horse.ownerId(),
-        horseImage.image() != null ? "/horses/" + id + "/image" : null
+        horseImage == null ? null : "/horses/" + id + "/image"
     );
   }
 
@@ -160,6 +160,10 @@ public class HorseJdbcDao implements HorseDao {
   @Override
   public Horse update(HorseUpdateDto horse, HorseImageDto horseImage) throws NotFoundException {
     LOG.trace("update({})", horse);
+
+    if (horseImage == null && !horse.deleteImage()) {
+      horseImage = getImageById(horse.id());
+    }
     int updated = jdbcClient
         .sql(SQL_UPDATE)
         .param("id", horse.id())
@@ -168,8 +172,8 @@ public class HorseJdbcDao implements HorseDao {
         .param("date_of_birth", horse.dateOfBirth())
         .param("sex", horse.sex().toString())
         .param("owner_id", horse.ownerId())
-        .param("image", horseImage.image())
-        .param("mime_type", horseImage.mimeType())
+        .param("image", horseImage == null ? null : horseImage.image())
+        .param("mime_type", horseImage == null ? null : horseImage.mimeType())
         .update();
 
     if (updated == 0) {
@@ -185,7 +189,7 @@ public class HorseJdbcDao implements HorseDao {
         horse.dateOfBirth(),
         horse.sex(),
         horse.ownerId(),
-        horseImage.image() != null ? "/horses/" + horse.id() + "/image" : null
+        horseImage == null ? null : "/horses/" + horse.id() + "/image"
     );
   }
 
