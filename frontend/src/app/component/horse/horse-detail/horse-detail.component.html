@@ -1,0 +1,103 @@
+<div class="container mt-4">
+  <div *ngIf="loading" class="text-center">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    Could not load horse details. Please try again later.
+  </div>
+
+  <div *ngIf="!loading && !error && horse">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="display-4">{{ horse.name }}</h1>
+      <div class="btn-group">
+        <a [routerLink]="['/horses', horse.id, 'edit']" class="btn btn-warning">
+          <i class="bi bi-pencil"></i> Edit
+        </a>
+        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#delete-dialog">
+          <i class="bi bi-trash"></i> Delete
+        </button>
+        <a [routerLink]="['/horses']" class="btn btn-secondary">
+          <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h3>Basic Information</h3>
+          </div>
+          <div class="card-body">
+            <dl class="row">
+              <dt class="col-sm-4">Name:</dt>
+              <dd class="col-sm-8">{{ horse.name }}</dd>
+
+              <dt class="col-sm-4">Date of Birth:</dt>
+              <dd class="col-sm-8">{{ formatDate(horse.dateOfBirth) }}</dd>
+
+              <dt class="col-sm-4">Sex:</dt>
+              <dd class="col-sm-8">{{ getSexDisplay(horse.sex) }}</dd>
+
+              <dt class="col-sm-4">Owner:</dt>
+              <dd class="col-sm-8">{{ getOwnerFullName() }}</dd>
+
+              <dt class="col-sm-4">Description:</dt>
+              <dd class="col-sm-8">{{ horse.description || 'No description available' }}</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h3>Parentage</h3>
+          </div>
+          <div class="card-body">
+            <dl class="row">
+              <dt class="col-sm-4">Mother:</dt>
+              <dd class="col-sm-8">
+                <ng-container *ngIf="horse.mother; else noMother">
+                  <a [routerLink]="['/horses', horse.mother.id, 'detail']" class="link-primary">
+                    {{ horse.mother.name }}
+                  </a>
+                </ng-container>
+                <ng-template #noMother>None</ng-template>
+              </dd>
+
+              <dt class="col-sm-4">Father:</dt>
+              <dd class="col-sm-8">
+                <ng-container *ngIf="horse.father; else noFather">
+                  <a [routerLink]="['/horses', horse.father.id, 'detail']" class="link-primary">
+                    {{ horse.father.name }}
+                  </a>
+                </ng-container>
+                <ng-template #noFather>None</ng-template>
+              </dd>
+            </dl>
+          </div>
+        </div>
+
+        <div *ngIf="getImageUrl()" class="card mb-4">
+          <div class="card-header">
+            <h3>Image</h3>
+          </div>
+          <div class="card-body text-center">
+            <img [src]="getImageUrl()" alt="Horse image" class="img-fluid" style="max-height: 300px;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<app-confirm-delete-dialog
+  id="delete-dialog"
+  [hidden]="!horse"
+  [deleteWhat]="horse?.name"
+  (confirm)="deleteHorse()">
+</app-confirm-delete-dialog>
