@@ -84,11 +84,15 @@ export class HorseService {
   }
 
   public searchByName(name: string, limit: number, sex: string, excludeId: number): Observable<Horse[]> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('name', name)
       .set('limit', limit)
-      .set('sex', sex)
-      .set('excludeId', excludeId);
+      .set('sex', sex);
+
+    if (excludeId !== undefined) {
+      params = params.set('excludeId', excludeId.toString());
+    }
+
     return this.http.get<Horse[]>(baseUri, {params});
   }
 

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
 
@@ -35,11 +36,11 @@ public class HorseDaoTest {
    */
   @Test
   public void getAllReturnsAllStoredHorses() {
-    List<Horse> horses = horseDao.search(null);
-    assertThat(horses.size()).isGreaterThanOrEqualTo(1); // TODO adapt to exact number of elements in test data later
+    List<Horse> horses = horseDao.search(new HorseSearchDto(null, null, null, null, null, null, null));
+    assertThat(horses.size()).isGreaterThanOrEqualTo(3); // TODO adapt to exact number of elements in test data later
     assertThat(horses)
         .extracting(Horse::id, Horse::name)
-        .contains(tuple(-1L, "Wendy"));
+        .contains(tuple(-1L, "Wendys Mother"));
   }
 
   /**

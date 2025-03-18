@@ -14,10 +14,11 @@ CREATE TABLE IF NOT EXISTS horse
     date_of_birth DATE NOT NULL,
     sex           ENUM('MALE', 'FEMALE') NOT NULL,
     owner_id      BIGINT,
-    image         BLOB,
-    mime_type     VARCHAR(100),
     mother_id     BIGINT,
     father_id     BIGINT,
+    image         BLOB,
+    mime_type     VARCHAR(100),
+    CONSTRAINT fk_owner FOREIGN KEY (owner_id) REFERENCES owner(id) ON DELETE SET NULL,
     CONSTRAINT fk_mother FOREIGN KEY (mother_id) REFERENCES horse(id) ON DELETE SET NULL,
     CONSTRAINT fk_father FOREIGN KEY (father_id) REFERENCES horse(id) ON DELETE SET NULL
     );

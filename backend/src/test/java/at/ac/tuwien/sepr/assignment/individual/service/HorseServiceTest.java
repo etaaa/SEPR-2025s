@@ -8,6 +8,7 @@ import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseListDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
 import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
 import at.ac.tuwien.sepr.assignment.individual.type.Sex;
@@ -35,7 +36,7 @@ public class HorseServiceTest {
    */
   @Test
   public void getAllReturnsAllStoredHorses() {
-    List<HorseListDto> horses = horseService.search(null)
+    List<HorseListDto> horses = horseService.search(new HorseSearchDto(null, null, null, null, null, null, null))
         .toList();
 
     assertThat(horses.size()).isGreaterThanOrEqualTo(1); // TODO: Adapt to exact number of test data entries

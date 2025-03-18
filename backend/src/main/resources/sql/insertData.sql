@@ -15,7 +15,7 @@ DELETE
 FROM horse
 where id < 0;
 
-INSERT INTO horse (id, name, description, date_of_birth, sex, image, mime_type, mother_id, father_id)
-VALUES (-1, 'Wendys Mother', 'The famous one!', '1990-12-12', 'FEMALE', null, null, null, null),
-       (-2, 'Wendys Father', 'The cool one!', '1990-12-12', 'MALE', null, null, null, null),
-       (-3, 'Wendy', 'The new one!', '2010-12-12', 'FEMALE', null, null, -1, -2);
+INSERT INTO horse (id, name, description, date_of_birth, sex, owner_id, mother_id, father_id, image, mime_type)
+VALUES (-1, 'Wendys Mother', 'The famous one!', '1990-12-12', 'FEMALE', null, null, null, null, null),
+       (-2, 'Wendys Father', 'The cool one!', '1990-12-12', 'MALE', null, null, null, null, null),
+       (-3, 'Wendy', 'The new one!', '2010-12-12', 'FEMALE', -1, -1, -2, null, null);

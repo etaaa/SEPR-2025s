@@ -2,6 +2,7 @@ package at.ac.tuwien.sepr.assignment.individual.persistence.impl;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseParentDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
@@ -13,6 +14,7 @@ import at.ac.tuwien.sepr.assignment.individual.type.Sex;
 import java.lang.invoke.MethodHandles;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,32 +36,26 @@ public class HorseJdbcDao implements HorseDao {
 
   private static final String TABLE_NAME = "horse";
 
-  private static final String SQL_SELECT_BY_ID =
-      "SELECT id, name, description, date_of_birth, sex, owner_id, mother_id, father_id, "
-          + "CASE WHEN image IS NOT NULL THEN 1 ELSE 0 END AS has_image "
+  private static final String SQL_SELECT_PARENT_BY_ID =
+      "SELECT id, name "
           + "FROM " + TABLE_NAME
           + " WHERE id = :id";
-
-  private static final String SQL_SELECT_IMAGE_BY_ID =
-      "SELECT image, mime_type FROM " + TABLE_NAME
-          + " WHERE ID = :id";
 
   private static final String SQL_SELECT_ALL =
       "SELECT id, name, description, date_of_birth, sex, owner_id, mother_id, father_id, "
           + "CASE WHEN image IS NOT NULL THEN 1 ELSE 0 END AS has_image "
           + "FROM " + TABLE_NAME;
 
-  private static final String SQL_SELECT_SEARCH_LIMIT_CLAUSE = " LIMIT :limit";
-
-  private static final String SQL_SELECT_SEARCH_PARENTS_CLAUSE =
-      " WHERE sex = :sex AND id <> :excludeId";
+  private static final String SQL_SELECT_IMAGE_BY_ID =
+      "SELECT image, mime_type FROM " + TABLE_NAME
+          + " WHERE ID = :id";
 
   private static final String SQL_INSERT =
       "INSERT INTO " + TABLE_NAME
           + " (name, description, date_of_birth, sex, owner_id, mother_id, father_id, image, mime_type) "
           + "VALUES (:name, :description, :date_of_birth, :sex, :owner_id, :mother_id, :father_id, :image, :mime_type)";
 
-  private static final String SQL_UPDATE =
+  private static final String SQL_UPDATE_BY_ID =
       "UPDATE " + TABLE_NAME
           + """
               SET name = :name,
@@ -74,7 +70,7 @@ public class HorseJdbcDao implements HorseDao {
               WHERE id = :id
           """;
 
-  private static final String SQL_DELETE =
+  private static final String SQL_DELETE_BY_ID =
       "DELETE FROM " + TABLE_NAME
           + " WHERE id = :id";
 
@@ -90,7 +86,7 @@ public class HorseJdbcDao implements HorseDao {
   public Horse getById(long id) throws NotFoundException {
     LOG.trace("getById({})", id);
     List<Horse> horses = jdbcClient
-        .sql(SQL_SELECT_BY_ID)
+        .sql(SQL_SELECT_ALL + " WHERE id = :id")
         .param("id", id)
         .query(this::mapRow)
         .list();
@@ -106,6 +102,44 @@ public class HorseJdbcDao implements HorseDao {
     return horses.getFirst();
   }
 
+  @Override
+  public HorseParentDto getParentById(long id) throws NotFoundException {
+    /*
+    As mentioned in the “Architekturdesign.pdf” slides on page 17, returning a
+    DTO is acceptable if an entity doesn’t accurately represent the data. In
+    this case, since we only need the ID and Name fields, our DTO represents the
+    data more precisely. If we were to return an entity instead, many fields
+    would be null, which is not ideal.
+     */
+    LOG.trace("getParentById({})", id);
+    List<HorseParentDto> horses = jdbcClient
+        .sql(SQL_SELECT_PARENT_BY_ID)
+        .param("id", id)
+        .query(this::mapParentRow)
+        .list();
+
+    if (horses.isEmpty()) {
+      throw new NotFoundException("No horse with ID %d found".formatted(id));
+    }
+    if (horses.size() > 1) {
+      // This should never happen!!
+      throw new FatalException("Too many horses with ID %d found".formatted(id));
+    }
+
+    return horses.getFirst();
+  }
+
+  /*
+  @Override
+  public List<Horse> getAllById(Collection<Long> ids) {
+    LOG.trace("getAllById({})", ids);
+    return jdbcClient
+        .sql(SQL_SELECT_ALL + " WHERE id IN (:ids)")
+        .param("ids", ids)
+        .query(this::mapRow)
+        .list();
+  }
+  */
 
   @Override
   public HorseImageDto getImageById(long id) throws NotFoundException {
@@ -125,14 +159,44 @@ public class HorseJdbcDao implements HorseDao {
   @Override
   public List<Horse> search(HorseSearchDto searchParameters) {
     LOG.trace("search({})", searchParameters);
-    var query = SQL_SELECT_ALL;
 
     Map<String, Object> params = new HashMap<>();
-    if (searchParameters.limit() != null && searchParameters.sex() != null && searchParameters.excludeId() != null) {
-      params.put("limit", searchParameters.limit());
+    List<String> conditions = new ArrayList<>();
+
+    if (searchParameters.name() != null) {
+      params.put("name", "%" + searchParameters.name() + "%");
+      conditions.add("LOWER(name) LIKE LOWER(:name)");
+    }
+    if (searchParameters.description() != null) {
+      params.put("description", "%" + searchParameters.description() + "%");
+      conditions.add("LOWER(description) LIKE LOWER(:description)");
+    }
+    if (searchParameters.bornBefore() != null) {
+      params.put("bornBefore", searchParameters.bornBefore());
+      conditions.add("date_of_birth < :bornBefore");
+    }
+    if (searchParameters.sex() != null) {
       params.put("sex", searchParameters.sex().toString());
+      conditions.add("sex = :sex");
+    }
+    // TODO: filter owners by name
+    if (searchParameters.ownerName() != null) {
+      params.put("ownerName", searchParameters.ownerName());
+      conditions.add("ownerName = :ownerName");
+    }
+    if (searchParameters.excludeId() != null) {
       params.put("excludeId", searchParameters.excludeId());
-      query += SQL_SELECT_SEARCH_PARENTS_CLAUSE;
+      conditions.add("id <> :excludeId");
+    }
+
+    String query = SQL_SELECT_ALL;
+    if (!conditions.isEmpty()) {
+      query += " WHERE " + String.join(" AND ", conditions);
+    }
+
+    if (searchParameters.limit() != null) {
+      params.put("limit", searchParameters.limit());
+      query += " LIMIT :limit";
     }
 
     return jdbcClient
@@ -182,13 +246,14 @@ public class HorseJdbcDao implements HorseDao {
 
   @Override
   public Horse update(HorseUpdateDto horse, HorseImageDto horseImage) throws NotFoundException {
+    // TODO: When we change the gender of a horse, all its children must remove the mother/father connection as that cant be correct anymore.
     LOG.trace("update({})", horse);
 
     if (horseImage == null && !horse.deleteImage()) {
       horseImage = getImageById(horse.id());
     }
     int updated = jdbcClient
-        .sql(SQL_UPDATE)
+        .sql(SQL_UPDATE_BY_ID)
         .param("id", horse.id())
         .param("name", horse.name())
         .param("description", horse.description())
@@ -226,7 +291,7 @@ public class HorseJdbcDao implements HorseDao {
     LOG.trace("delete({})", id);
 
     int rowsAffected = jdbcClient
-        .sql(SQL_DELETE)
+        .sql(SQL_DELETE_BY_ID)
         .param("id", id)
         .update();
 
@@ -251,6 +316,14 @@ public class HorseJdbcDao implements HorseDao {
         result.getObject("mother_id", Long.class),
         result.getObject("father_id", Long.class),
         imageUrl
+    );
+  }
+
+  private HorseParentDto mapParentRow(ResultSet result, int rownum) throws SQLException {
+
+    return new HorseParentDto(
+        result.getLong("id"),
+        result.getString("name")
     );
   }
 

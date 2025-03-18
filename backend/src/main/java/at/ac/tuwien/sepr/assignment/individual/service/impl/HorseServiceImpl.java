@@ -4,6 +4,7 @@ import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseListDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseParentDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerDto;
@@ -56,11 +57,37 @@ public class HorseServiceImpl implements HorseService {
 
   @Override
   public HorseDetailDto getById(long id) throws NotFoundException {
+    /*
+    In this method we won't have to validate the ID (check if there
+    exists a horse with the given ID), as that would be useless. We
+    would make the same query twice in that case (see
+    https://tuwel.tuwien.ac.at/mod/forum/discuss.php?d=478592).
+     */
     LOG.trace("details({})", id);
     Horse horse = dao.getById(id);
+
+    HorseParentDto mother = null;
+    HorseParentDto father = null;
+    if (horse.motherId() != null) {
+      try {
+        mother = dao.getParentById(horse.motherId());
+      } catch (NotFoundException e) {
+        throw new FatalException("Mother with ID " + horse.motherId() + " not found, although it was validated.", e);
+      }
+    }
+    if (horse.fatherId() != null) {
+      try {
+        father = dao.getParentById(horse.fatherId());
+      } catch (NotFoundException e) {
+        throw new FatalException("Father with ID " + horse.motherId() + " not found, although it was validated.", e);
+      }
+    }
+
     return mapper.entityToDetailDto(
         horse,
-        ownerMapForSingleId(horse.ownerId()));
+        ownerMapForSingleId(horse.ownerId()),
+        mother,
+        father);
   }
 
 
@@ -101,9 +128,29 @@ public class HorseServiceImpl implements HorseService {
     validator.validateForCreate(horse);
 
     var createdHorse = dao.create(horse, image);
+
+    HorseParentDto mother = null;
+    HorseParentDto father = null;
+    if (createdHorse.motherId() != null) {
+      try {
+        mother = dao.getParentById(createdHorse.motherId());
+      } catch (NotFoundException e) {
+        throw new FatalException("Mother with ID " + createdHorse.motherId() + " not found, although it was validated.", e);
+      }
+    }
+    if (createdHorse.fatherId() != null) {
+      try {
+        father = dao.getParentById(createdHorse.fatherId());
+      } catch (NotFoundException e) {
+        throw new FatalException("Father with ID " + createdHorse.motherId() + " not found, although it was validated.", e);
+      }
+    }
+
     return mapper.entityToDetailDto(
         createdHorse,
-        ownerMapForSingleId(createdHorse.ownerId()));
+        ownerMapForSingleId(createdHorse.ownerId()),
+        mother,
+        father);
   }
 
 
@@ -114,9 +161,29 @@ public class HorseServiceImpl implements HorseService {
     validator.validateForUpdate(horse);
 
     var updatedHorse = dao.update(horse, image);
+
+    HorseParentDto mother = null;
+    HorseParentDto father = null;
+    if (updatedHorse.motherId() != null) {
+      try {
+        mother = dao.getParentById(updatedHorse.motherId());
+      } catch (NotFoundException e) {
+        throw new FatalException("Mother with ID " + updatedHorse.motherId() + " not found, although it was validated.", e);
+      }
+    }
+    if (updatedHorse.fatherId() != null) {
+      try {
+        father = dao.getParentById(updatedHorse.fatherId());
+      } catch (NotFoundException e) {
+        throw new FatalException("Father with ID " + updatedHorse.fatherId() + " not found, although it was validated.", e);
+      }
+    }
+
     return mapper.entityToDetailDto(
         updatedHorse,
-        ownerMapForSingleId(updatedHorse.ownerId()));
+        ownerMapForSingleId(updatedHorse.ownerId()),
+        mother,
+        father);
 
   }
 

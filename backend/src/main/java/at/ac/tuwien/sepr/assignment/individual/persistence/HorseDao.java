@@ -3,11 +3,14 @@ package at.ac.tuwien.sepr.assignment.individual.persistence;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseParentDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
+import at.ac.tuwien.sepr.assignment.individual.entity.Owner;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -24,6 +27,12 @@ public interface HorseDao {
    * @throws NotFoundException if the Horse with the given ID does not exist in the persistent data store
    */
   Horse getById(long id) throws NotFoundException;
+
+  HorseParentDto getParentById(long id) throws NotFoundException;
+
+  /*
+  List<Horse> getAllById(Collection<Long> ids);
+   */
 
   /**
    * Retrieves the image associated with a horse by its unique identifier.

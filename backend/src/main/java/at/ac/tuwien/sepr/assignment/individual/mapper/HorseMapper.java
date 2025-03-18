@@ -2,11 +2,14 @@ package at.ac.tuwien.sepr.assignment.individual.mapper;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseListDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseParentDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
 import at.ac.tuwien.sepr.assignment.individual.exception.FatalException;
+
 import java.lang.invoke.MethodHandles;
 import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -48,13 +51,15 @@ public class HorseMapper {
    * Converts a {@link Horse} entity into a {@link HorseDetailDto}.
    * The given maps must contain the owners and parents referenced by the horse.
    *
-   * @param horse   the horse entity to convert
-   * @param owners  a map of horse owners by their ID
+   * @param horse  the horse entity to convert
+   * @param owners a map of horse owners by their ID
    * @return the converted {@link HorseDetailDto}
    */
   public HorseDetailDto entityToDetailDto(
       Horse horse,
-      Map<Long, OwnerDto> owners) {
+      Map<Long, OwnerDto> owners,
+      HorseParentDto mother,
+      HorseParentDto father) {
     LOG.trace("entityToDto({})", horse);
     if (horse == null) {
       return null;
@@ -67,10 +72,10 @@ public class HorseMapper {
         horse.dateOfBirth(),
         horse.sex(),
         getOwner(horse, owners),
-        horse.motherId(),
-        horse.fatherId(),
+        mother,
+        father,
         horse.imageUrl()
-        );
+    );
   }
 
   private OwnerDto getOwner(Horse horse, Map<Long, OwnerDto> owners) {
