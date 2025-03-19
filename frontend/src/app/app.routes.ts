@@ -6,6 +6,7 @@ import {
 import {HorseComponent} from './component/horse/horse.component';
 import {HorseDetailComponent} from "./component/horse/horse-detail/horse-detail.component";
 import {OwnerComponent} from "./component/owner/owner.component";
+import {OwnerCreateComponent} from "./component/owner/owner-create/owner-create.component";
 
 
 export const routes: Routes = [
@@ -19,7 +20,8 @@ export const routes: Routes = [
   },
   {
     path: 'owners', children: [
-      {path: '', component: OwnerComponent}
+      {path: '', component: OwnerComponent},
+      {path: 'create', component: OwnerCreateComponent}
     ]
   },
   {path: '**', redirectTo: 'horses'},

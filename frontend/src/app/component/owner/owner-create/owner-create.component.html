@@ -1,0 +1,69 @@
+<h1 class="display-1">Create New Owner</h1>
+
+<form #form="ngForm" (ngSubmit)="onSubmit(form)">
+  <div class="row mb-2">
+    <label for="ownerFirstName" class="col-form-label text-md-end text-muted col-md-2">
+      First Name
+    </label>
+    <div class="col-md-10">
+      <input
+        type="text"
+        id="ownerFirstName"
+        name="ownerFirstName"
+        placeholder="First name"
+        class="form-control"
+        [class]="dynamicCssClassesForInput(ownerFirstNameModel)"
+        [(ngModel)]="owner.firstName"
+        #ownerFirstNameModel="ngModel"
+        required>
+      <div class="invalid-feedback">
+        First name is required
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-2">
+    <label for="ownerLastName" class="col-form-label text-md-end text-muted col-md-2">
+      Last Name
+    </label>
+    <div class="col-md-10">
+      <input
+        type="text"
+        id="ownerLastName"
+        name="ownerLastName"
+        placeholder="Last name"
+        class="form-control"
+        [class]="dynamicCssClassesForInput(ownerLastNameModel)"
+        [(ngModel)]="owner.lastName"
+        #ownerLastNameModel="ngModel"
+        required>
+      <div class="invalid-feedback">
+        Last name is required
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-2">
+    <label for="ownerDescription" class="col-form-label text-md-end text-muted col-md-2">
+      Description
+    </label>
+    <div class="col-md-10">
+      <textarea
+        class="form-control"
+        id="ownerDescription"
+        name="ownerDescription"
+        placeholder="Description (optional)"
+        [(ngModel)]="owner.description">
+      </textarea>
+    </div>
+  </div>
+
+  <div class="mt-4 d-flex flex-row">
+    <button
+      class="btn btn-primary"
+      [disabled]="!form.valid"
+      type="submit">
+      Create
+    </button>
+  </div>
+</form>

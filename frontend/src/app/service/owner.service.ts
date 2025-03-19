@@ -25,6 +25,19 @@ export class OwnerService {
     return this.http.get<Owner[]>(baseUri);
   }
 
+  /**
+   * Create a new owner in the system.
+   *
+   * @param owner the data for the owner that should be created
+   * @return an Observable for the created owner
+   */
+  create(owner: Owner): Observable<Owner> {
+    return this.http.post<Owner>(
+      baseUri,
+      owner
+    );
+  }
+
   public searchByName(name: string, limitTo: number): Observable<Owner[]> {
     const params = new HttpParams()
       .set('name', name)
