@@ -3,8 +3,6 @@ import {Injectable} from '@angular/core';
 import {map, Observable} from 'rxjs';
 import {environment} from 'src/environments/environment';
 import {Horse, HorseCreate} from '../dto/horse';
-import {formatIsoDate} from "../utils/date-helper";
-import {Owner} from "../dto/owner";
 
 
 const baseUri = environment.backendUrl + '/horses';
@@ -24,8 +22,22 @@ export class HorseService {
    *
    * @return observable list of found horses.
    */
-  getAll(): Observable<Horse[]> {
-    return this.http.get<Horse[]>(baseUri)
+  getAll(filters: {
+    name?: string,
+    description?: string,
+    dateOfBirth?: string,
+    sex?: string,
+    owner?: string
+  } = {}): Observable<Horse[]> {
+    let params = new HttpParams();
+
+    if (filters.name) params = params.set('name', filters.name);
+    if (filters.description) params = params.set('description', filters.description);
+    if (filters.dateOfBirth) params = params.set('dateOfBirth', filters.dateOfBirth);
+    if (filters.sex) params = params.set('sex', filters.sex);
+    if (filters.owner) params = params.set('ownerName', filters.owner);
+
+    return this.http.get<Horse[]>(baseUri, {params})
       .pipe(
         map(horses => horses.map(this.fixHorseDate))
       );

@@ -5,13 +5,16 @@ import at.ac.tuwien.sepr.assignment.individual.entity.Owner;
 import at.ac.tuwien.sepr.assignment.individual.exception.FatalException;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
 import at.ac.tuwien.sepr.assignment.individual.persistence.OwnerDao;
+
 import java.lang.invoke.MethodHandles;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,20 +28,13 @@ import org.springframework.stereotype.Repository;
 public class OwnerJdbcDao implements OwnerDao {
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String TABLE_NAME = "owner";
+
   private static final String SQL_SELECT_BY_ID =
       "SELECT * FROM " + TABLE_NAME
           + " WHERE id = :id";
 
   private static final String SQL_SELECT_ALL =
-      "SELECT * FROM " + TABLE_NAME
-          + " WHERE id IN (:ids)";
-
-  private static final String SQL_SELECT_SEARCH =
-      "SELECT * FROM " + TABLE_NAME
-          + " WHERE UPPER(first_name || ' ' || last_name) LIKE UPPER('%%' || COALESCE(:name, '') || '%%')";
-
-  private static final String SQL_SELECT_SEARCH_LIMIT_CLAUSE = " LIMIT :limit";
-
+      "SELECT * FROM " + TABLE_NAME;
 
   private final JdbcClient jdbcClient;
 
@@ -46,6 +42,7 @@ public class OwnerJdbcDao implements OwnerDao {
   public OwnerJdbcDao(JdbcClient jdbcClient) {
     this.jdbcClient = jdbcClient;
   }
+
 
   @Override
   public Owner getById(long id) throws NotFoundException {
@@ -67,27 +64,30 @@ public class OwnerJdbcDao implements OwnerDao {
 
 
   @Override
-  public Collection<Owner> getAllById(Collection<Long> ids) {
-    LOG.trace("getAllById({})", ids);
-    return jdbcClient
-        .sql(SQL_SELECT_ALL)
-        .param("ids", ids)
-        .query(this::mapRow)
-        .list();
-  }
-
-  @Override
   public Collection<Owner> search(OwnerSearchDto searchParameters) {
     LOG.trace("search({})", searchParameters);
-    var query = SQL_SELECT_SEARCH;
 
     Map<String, Object> params = new HashMap<>();
-    params.put("name", searchParameters.name());
+    List<String> conditions = new ArrayList<>();
 
-    var maxAmount = searchParameters.maxAmount();
-    if (maxAmount != null) {
-      query += SQL_SELECT_SEARCH_LIMIT_CLAUSE;
-      params.put("limit", maxAmount);
+    if (searchParameters.name() != null) {
+      params.put("name", searchParameters.name());
+      conditions.add("UPPER(first_name || ' ' || last_name) LIKE UPPER('%%' || COALESCE(:name, '') || '%%')");
+    }
+
+    if (searchParameters.ids() != null) {
+      params.put("ids", searchParameters.ids());
+      conditions.add("id IN (:ids)");
+    }
+
+    String query = SQL_SELECT_ALL;
+    if (!conditions.isEmpty()) {
+      query += " WHERE " + String.join(" AND ", conditions);
+    }
+
+    if (searchParameters.limit() != null) {
+      params.put("limit", searchParameters.limit());
+      query += " LIMIT :limit";
     }
 
     return jdbcClient
@@ -97,6 +97,7 @@ public class OwnerJdbcDao implements OwnerDao {
         .list();
   }
 
+
   private Owner mapRow(ResultSet resultSet, int i) throws SQLException {
     return new Owner(
         resultSet.getLong("id"),
@@ -104,4 +105,5 @@ public class OwnerJdbcDao implements OwnerDao {
         resultSet.getString("last_name"),
         resultSet.getString("description"));
   }
+
 }

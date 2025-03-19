@@ -1,7 +1,10 @@
 package at.ac.tuwien.sepr.assignment.individual.dto;
 
 import at.ac.tuwien.sepr.assignment.individual.type.Sex;
+
 import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.format.annotation.DateTimeFormat;
 
 /**
@@ -12,12 +15,10 @@ public record HorseSearchDto(
     String name,
     String description,
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    LocalDate bornBefore,
+    LocalDate dateOfBirth,
     Sex sex,
     String ownerName,
     Long excludeId,
     Integer limit
 ) {
 }
-
-// TODO: not up to date

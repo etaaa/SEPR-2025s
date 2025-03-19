@@ -171,19 +171,15 @@ public class HorseJdbcDao implements HorseDao {
       params.put("description", "%" + searchParameters.description() + "%");
       conditions.add("LOWER(description) LIKE LOWER(:description)");
     }
-    if (searchParameters.bornBefore() != null) {
-      params.put("bornBefore", searchParameters.bornBefore());
-      conditions.add("date_of_birth < :bornBefore");
+    if (searchParameters.dateOfBirth() != null) {
+      params.put("dateOfBirth", searchParameters.dateOfBirth());
+      conditions.add("date_of_birth < :dateOfBirth");
     }
     if (searchParameters.sex() != null) {
       params.put("sex", searchParameters.sex().toString());
       conditions.add("sex = :sex");
     }
-    // TODO: filter owners by name
-    if (searchParameters.ownerName() != null) {
-      params.put("ownerName", searchParameters.ownerName());
-      conditions.add("ownerName = :ownerName");
-    }
+
     if (searchParameters.excludeId() != null) {
       params.put("excludeId", searchParameters.excludeId());
       conditions.add("id <> :excludeId");

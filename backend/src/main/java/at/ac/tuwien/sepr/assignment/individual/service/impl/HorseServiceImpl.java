@@ -8,6 +8,7 @@ import at.ac.tuwien.sepr.assignment.individual.dto.HorseParentDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.OwnerSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
 import at.ac.tuwien.sepr.assignment.individual.exception.ConflictException;
 import at.ac.tuwien.sepr.assignment.individual.exception.FatalException;
@@ -23,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -103,20 +105,29 @@ public class HorseServiceImpl implements HorseService {
     LOG.trace("search({})", searchParameters);
 
     List<Horse> horses = dao.search(searchParameters);
+    if (horses.isEmpty()) {
+      return Stream.empty();
+    }
 
-    var ownerIds = horses.stream() // Extract all owner IDs
+    var ownerIds = horses.stream()
         .map(Horse::ownerId)
         .filter(Objects::nonNull)
         .collect(Collectors.toUnmodifiableSet());
 
-    Map<Long, OwnerDto> ownerMap; // Getting owner data by ID
-    try {
-      ownerMap = ownerService.getAllById(ownerIds);
-    } catch (NotFoundException e) {
-      throw new FatalException("A persisted Horse refers to a non-existing Owner", e);
+    Map<Long, OwnerDto> ownerMap;
+    if (ownerIds.isEmpty()) {
+      ownerMap = Collections.emptyMap();
+    } else {
+      /*
+      Convert the stream of OwnerDto into a map, where the key is the ownerId and the
+      key the OwnerDto itself (Function.identity())
+      */
+      ownerMap = ownerService.search(new OwnerSearchDto(searchParameters.ownerName(), ownerIds, null))
+          .collect(Collectors.toMap(OwnerDto::id, Function.identity()));
     }
 
     return horses.stream()
+        .filter(horse -> searchParameters.ownerName() == null || (horse.ownerId() != null && ownerMap.containsKey(horse.ownerId())))
         .map(horse -> mapper.entityToListDto(horse, ownerMap));
   }
 

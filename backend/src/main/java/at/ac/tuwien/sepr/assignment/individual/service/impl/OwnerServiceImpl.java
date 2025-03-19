@@ -59,7 +59,7 @@ public class OwnerServiceImpl implements OwnerService {
   public Map<Long, OwnerDto> getAllById(Collection<Long> ids) throws NotFoundException {
     LOG.trace("getAllById({})", ids);
     Map<Long, OwnerDto> owners =
-        dao.getAllById(ids).stream()
+        dao.search(new OwnerSearchDto(null, ids, null)).stream()
             .map(mapper::entityToDto)
             .collect(Collectors.toUnmodifiableMap(OwnerDto::id, Function.identity()));
     for (final var id : ids) {
