@@ -41,9 +41,9 @@ public class OwnerValidator {
     }
 
     if (searchParams.limit() == null) {
-      validationErrors.add("Limit is required for owner search");
+      validationErrors.add("Search limit is required");
     } else if (searchParams.limit() <= 0) {
-      validationErrors.add("Limit must be a positive integer");
+      validationErrors.add("Search limit must be greater or equal to 1");
     }
 
     if (!validationErrors.isEmpty()) {

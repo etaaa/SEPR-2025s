@@ -201,12 +201,28 @@ public class HorseValidator {
     LOG.trace("validateForUpdate({})", horse);
 
     List<String> validationErrors = new ArrayList<>();
+    List<String> conflictErrors = new ArrayList<>();
 
-    if (horse.id() == null) {
-      validationErrors.add("No ID given");
-    } else {
+    if (horse.id() != null) {
       try {
-        horseDao.getById(horse.id());
+        Horse existingHorse = horseDao.getById(horse.id());
+        List<Horse> children = horseDao.getChildrenByParentId(horse.id());
+
+        if (!children.isEmpty()) {
+          if (horse.sex() != null && !horse.sex().equals(existingHorse.sex())) {
+            conflictErrors.add("Cannot change sex of a horse that has children");
+          }
+
+          if (horse.dateOfBirth() != null && !horse.dateOfBirth().equals(existingHorse.dateOfBirth())) {
+            for (Horse child : children) {
+              if (!horse.dateOfBirth().isBefore(child.dateOfBirth())) {
+                conflictErrors.add("Cannot change date of birth to be after a child's birth date");
+                break;
+              }
+            }
+          }
+        }
+
       } catch (NotFoundException e) {
         validationErrors.add("Horse with ID " + horse.id() + " does not exist");
       }
@@ -248,8 +264,6 @@ public class HorseValidator {
         validationErrors.add("Owner with ID " + horse.ownerId() + " does not exist");
       }
     }
-
-    List<String> conflictErrors = new ArrayList<>();
 
     if (horse.motherId() != null) {
       try {

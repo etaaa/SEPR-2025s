@@ -26,12 +26,6 @@ public interface HorseDao {
    */
   Horse getById(long id) throws NotFoundException;
 
-  HorseParentDto getParentById(long id) throws NotFoundException;
-
-  /*
-  List<Horse> getAllById(Collection<Long> ids);
-   */
-
   /**
    * Retrieves the image associated with a horse by its unique identifier.
    *
@@ -40,6 +34,12 @@ public interface HorseDao {
    * @throws NotFoundException if no horse or image with the given ID exists in the persistent data store
    */
   HorseImageDto getImageById(long id) throws NotFoundException;
+
+
+  HorseParentDto getParentById(long id) throws NotFoundException;
+
+
+  List<Horse> getChildrenByParentId(long id);
 
 
   List<Horse> getAll();

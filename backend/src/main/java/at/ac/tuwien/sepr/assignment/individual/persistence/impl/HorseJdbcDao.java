@@ -38,19 +38,24 @@ public class HorseJdbcDao implements HorseDao {
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String TABLE_NAME = "horse";
 
+  private static final String SQL_SELECT_IMAGE_BY_ID =
+      "SELECT image, mime_type FROM " + TABLE_NAME
+          + " WHERE ID = :id";
+
   private static final String SQL_SELECT_PARENT_BY_ID =
       "SELECT id, name "
           + "FROM " + TABLE_NAME
           + " WHERE id = :id";
 
+  private static final String SQL_SELECT_CHILDREN_BY_ID =
+      "SELECT id, date_of_birth, sex "
+          + "FROM " + TABLE_NAME
+          + " WHERE mother_id = :id OR father_id = :id";
+
   private static final String SQL_SELECT_ALL =
       "SELECT id, name, description, date_of_birth, sex, owner_id, mother_id, father_id, "
           + "CASE WHEN image IS NOT NULL THEN 1 ELSE 0 END AS has_image "
           + "FROM " + TABLE_NAME;
-
-  private static final String SQL_SELECT_IMAGE_BY_ID =
-      "SELECT image, mime_type FROM " + TABLE_NAME
-          + " WHERE ID = :id";
 
   private static final String SQL_INSERT =
       "INSERT INTO " + TABLE_NAME
@@ -113,6 +118,33 @@ public class HorseJdbcDao implements HorseDao {
 
 
   @Override
+  public HorseImageDto getImageById(long id) throws NotFoundException {
+
+    LOG.trace("getImageById({})", id);
+
+    try {
+      List<HorseImageDto> images = jdbcClient
+          .sql(SQL_SELECT_IMAGE_BY_ID)
+          .param("id", id)
+          .query((rs, rowNum) -> new HorseImageDto(rs.getBytes("image"), rs.getString("mime_type")))
+          .list();
+
+      if (images.isEmpty() || images.get(0) == null) {
+        throw new NotFoundException("No image for horse with ID %d found.".formatted(id));
+      }
+      if (images.size() > 1) {
+        throw new FatalException("Too many horses with ID %d found".formatted(id));
+      }
+
+      return images.get(0);
+
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
+    }
+  }
+
+
+  @Override
   public HorseParentDto getParentById(long id) throws NotFoundException {
 
     /*
@@ -147,25 +179,16 @@ public class HorseJdbcDao implements HorseDao {
 
 
   @Override
-  public HorseImageDto getImageById(long id) throws NotFoundException {
+  public List<Horse> getChildrenByParentId(long id) {
 
-    LOG.trace("getImageById({})", id);
+    LOG.trace("getChildrenById({})", id);
 
     try {
-      List<HorseImageDto> images = jdbcClient
-          .sql(SQL_SELECT_IMAGE_BY_ID)
+      return jdbcClient
+          .sql(SQL_SELECT_CHILDREN_BY_ID)
           .param("id", id)
-          .query((rs, rowNum) -> new HorseImageDto(rs.getBytes("image"), rs.getString("mime_type")))
+          .query(this::mapChildRow)
           .list();
-
-      if (images.isEmpty() || images.get(0) == null) {
-        throw new NotFoundException("No image for horse with ID %d found.".formatted(id));
-      }
-      if (images.size() > 1) {
-        throw new FatalException("Too many horses with ID %d found".formatted(id));
-      }
-
-      return images.get(0);
 
     } catch (DataAccessException e) {
       throw new PersistenceException("Error accessing database", e);
@@ -379,6 +402,20 @@ public class HorseJdbcDao implements HorseDao {
     return new HorseParentDto(
         result.getLong("id"),
         result.getString("name")
+    );
+  }
+
+  private Horse mapChildRow(ResultSet result, int rownum) throws SQLException {
+    return new Horse(
+        result.getLong("id"),
+        null,
+        null,
+        result.getDate("date_of_birth").toLocalDate(),
+        Sex.valueOf(result.getString("sex")),
+        null,
+        null,
+        null,
+        null
     );
   }
 
