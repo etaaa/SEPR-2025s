@@ -1,9 +1,7 @@
 package at.ac.tuwien.sepr.assignment.individual.rest;
 
-import at.ac.tuwien.sepr.assignment.individual.dto.OwnerCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerSearchDto;
-import at.ac.tuwien.sepr.assignment.individual.exception.ConflictException;
 import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
 import at.ac.tuwien.sepr.assignment.individual.service.OwnerService;
 
@@ -13,10 +11,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,9 +23,9 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping(OwnerEndpoint.BASE_PATH)
 public class OwnerEndpoint {
+
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   static final String BASE_PATH = "/owners";
-
   private final OwnerService service;
 
   public OwnerEndpoint(OwnerService service) {
@@ -40,7 +35,9 @@ public class OwnerEndpoint {
 
   @GetMapping
   public Stream<OwnerDto> getAll() {
+
     LOG.info("GET " + BASE_PATH);
+
     return service.getAll();
   }
 
@@ -52,15 +49,19 @@ public class OwnerEndpoint {
    */
   @GetMapping("/search")
   public Stream<OwnerDto> search(OwnerSearchDto searchParameters) {
+
     LOG.info("GET " + BASE_PATH + " query parameters: {}", searchParameters);
+
     try {
       return service.search(searchParameters);
+
     } catch (ValidationException e) {
       HttpStatus status = HttpStatus.BAD_REQUEST;
       logClientError(status, "Validation of search parameters failed", e);
       throw new ResponseStatusException(status, e.getMessage(), e);
     }
   }
+
 
   /**
    * Logs client-side errors with relevant details.
@@ -70,6 +71,7 @@ public class OwnerEndpoint {
    * @param e       the exception that occurred
    */
   private void logClientError(HttpStatus status, String message, Exception e) {
+
     LOG.warn("{} {}: {}: {}", status.value(), message, e.getClass().getSimpleName(), e.getMessage());
   }
 

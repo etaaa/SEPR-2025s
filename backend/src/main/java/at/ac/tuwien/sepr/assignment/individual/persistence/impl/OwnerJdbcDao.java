@@ -4,6 +4,7 @@ import at.ac.tuwien.sepr.assignment.individual.dto.OwnerSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Owner;
 import at.ac.tuwien.sepr.assignment.individual.exception.FatalException;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
+import at.ac.tuwien.sepr.assignment.individual.exception.PersistenceException;
 import at.ac.tuwien.sepr.assignment.individual.persistence.OwnerDao;
 
 import java.lang.invoke.MethodHandles;
@@ -17,6 +18,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -35,6 +37,11 @@ public class OwnerJdbcDao implements OwnerDao {
   private static final String SQL_SELECT_ALL =
       "SELECT * FROM " + TABLE_NAME;
 
+  private static final String SQL_INSERT =
+      "INSERT INTO " + TABLE_NAME
+          + " (first_name, last_name, description) "
+          + "VALUES (:firstName, :lastName, :description)";
+
   private final JdbcClient jdbcClient;
 
   @Autowired
@@ -45,36 +52,50 @@ public class OwnerJdbcDao implements OwnerDao {
 
   @Override
   public Owner getById(long id) throws NotFoundException {
+
     LOG.trace("getById({})", id);
-    List<Owner> owners = jdbcClient
-        .sql(SQL_SELECT_BY_ID)
-        .param("id", id)
-        .query(this::mapRow)
-        .list();
-    if (owners.isEmpty()) {
-      throw new NotFoundException("Owner with ID %d not found".formatted(id));
+
+    try {
+      List<Owner> owners = jdbcClient
+          .sql(SQL_SELECT_BY_ID)
+          .param("id", id)
+          .query(this::mapRow)
+          .list();
+
+      if (owners.isEmpty()) {
+        throw new NotFoundException("Owner with ID %d not found".formatted(id));
+      }
+      if (owners.size() > 1) {
+        throw new FatalException("Found more than one owner with ID %d".formatted(id));
+      }
+      return owners.getFirst();
+
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
     }
-    if (owners.size() > 1) {
-      // If this happens, something is wrong with either the DB or the select
-      throw new FatalException("Found more than one owner with ID %d".formatted(id));
-    }
-    return owners.getFirst();
   }
 
 
   @Override
   public List<Owner> getAll() {
+
     LOG.trace("getAll()");
 
-    return jdbcClient
-        .sql(SQL_SELECT_ALL)
-        .query(this::mapRow)
-        .list();
+    try {
+      return jdbcClient
+          .sql(SQL_SELECT_ALL)
+          .query(this::mapRow)
+          .list();
+
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
+    }
   }
 
 
   @Override
   public List<Owner> search(OwnerSearchDto searchParameters) {
+
     LOG.trace("search({})", searchParameters);
 
     Map<String, Object> params = new HashMap<>();
@@ -100,15 +121,21 @@ public class OwnerJdbcDao implements OwnerDao {
       query += " LIMIT :limit";
     }
 
-    return jdbcClient
-        .sql(query)
-        .params(params)
-        .query(this::mapRow)
-        .list();
+    try {
+      return jdbcClient
+          .sql(query)
+          .params(params)
+          .query(this::mapRow)
+          .list();
+
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
+    }
   }
 
 
-  private Owner mapRow(ResultSet resultSet, int i) throws SQLException {
+  private Owner mapRow(ResultSet resultSet, int rowNum) throws SQLException {
+
     return new Owner(
         resultSet.getLong("id"),
         resultSet.getString("first_name"),

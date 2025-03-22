@@ -43,7 +43,7 @@ public interface HorseService {
 
   HorseFamilyTreeDto getFamilyTree(long id, int depth) throws NotFoundException, ValidationException;
 
-  Stream<HorseListDto> search(HorseSearchDto searchParameters);
+  Stream<HorseListDto> search(HorseSearchDto searchParameters) throws ValidationException;
 
   /**
    * Creates a new horse entry in the system with the provided data and optional image.

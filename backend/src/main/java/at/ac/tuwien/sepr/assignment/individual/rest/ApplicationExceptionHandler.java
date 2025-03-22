@@ -1,6 +1,7 @@
 package at.ac.tuwien.sepr.assignment.individual.rest;
 
 
+import at.ac.tuwien.sepr.assignment.individual.exception.PersistenceException;
 import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
 
 import java.lang.invoke.MethodHandles;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
  */
 @RestControllerAdvice
 public class ApplicationExceptionHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   /**
@@ -31,7 +33,9 @@ public class ApplicationExceptionHandler {
   @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
   @ResponseBody
   public ValidationErrorRestDto handleValidationException(ValidationException e) {
+
     LOG.warn("Terminating request processing with status 422 due to {}: {}", e.getClass().getSimpleName(), e.getMessage());
+
     return new ValidationErrorRestDto(e.summary(), e.errors());
   }
 
@@ -45,8 +49,21 @@ public class ApplicationExceptionHandler {
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
   public ErrorDto handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+
     LOG.warn("Upload size exceeded: {}", e.getMessage());
+
     return new ErrorDto("The uploaded file exceeds the maximum allowed size.");
+  }
+
+
+  @ExceptionHandler
+  @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+  @ResponseBody
+  public ErrorDto handlePersistenceException(PersistenceException e) {
+
+    LOG.error("Database access failed: {}", e.getMessage(), e);
+
+    return new ErrorDto("A server error occurred while accessing the database.");
   }
 
 }

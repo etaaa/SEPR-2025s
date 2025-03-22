@@ -15,6 +15,7 @@ import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
 import at.ac.tuwien.sepr.assignment.individual.exception.ConflictException;
 import at.ac.tuwien.sepr.assignment.individual.exception.FatalException;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
+import at.ac.tuwien.sepr.assignment.individual.exception.PersistenceException;
 import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
 import at.ac.tuwien.sepr.assignment.individual.mapper.HorseMapper;
 import at.ac.tuwien.sepr.assignment.individual.persistence.HorseDao;
@@ -32,8 +33,8 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
 
 /**
  * Implementation of {@link HorseService} for handling image storage and retrieval.
@@ -62,6 +63,7 @@ public class HorseServiceImpl implements HorseService {
 
   @Override
   public HorseDetailDto getById(long id) throws NotFoundException {
+
     /*
     In this method we won't have to validate the ID (check if there
     exists a horse with the given ID), as that would be useless. We
@@ -69,6 +71,7 @@ public class HorseServiceImpl implements HorseService {
     https://tuwel.tuwien.ac.at/mod/forum/discuss.php?d=478592).
      */
     LOG.trace("details({})", id);
+
     Horse horse = dao.getById(id);
 
     HorseParentDto mother = null;
@@ -76,6 +79,7 @@ public class HorseServiceImpl implements HorseService {
     if (horse.motherId() != null) {
       try {
         mother = dao.getParentById(horse.motherId());
+
       } catch (NotFoundException e) {
         throw new FatalException("Mother with ID " + horse.motherId() + " not found, although it was validated.", e);
       }
@@ -83,6 +87,7 @@ public class HorseServiceImpl implements HorseService {
     if (horse.fatherId() != null) {
       try {
         father = dao.getParentById(horse.fatherId());
+
       } catch (NotFoundException e) {
         throw new FatalException("Father with ID " + horse.motherId() + " not found, although it was validated.", e);
       }
@@ -98,10 +103,13 @@ public class HorseServiceImpl implements HorseService {
 
   @Override
   public HorseImageDto getImageById(long id) throws NotFoundException {
+
     /*
-     The recursive family tree logic is implemented here in the service layer to keep the persistence layer focused on
-     simple data access. This follows clean architecture principles by separating business logic from database queries,
-     improves testability, and avoids database-specific SQL features.
+     The recursive family tree logic is implemented here in the service
+     layer to keep the persistence layer focused on simple data access.
+     This follows clean architecture principles by separating business
+     logic from database queries, improves testability, and avoids
+     database-specific SQL features.
      */
     LOG.trace("getImageById({})", id);
     return dao.getImageById(id);
@@ -110,18 +118,25 @@ public class HorseServiceImpl implements HorseService {
 
   @Override
   public Stream<HorseListDto> getAll() {
+
     LOG.trace("allHorses()");
+
     var horses = dao.getAll();
+
     var ownerIds = horses.stream()
         .map(Horse::ownerId)
         .filter(Objects::nonNull)
         .collect(Collectors.toUnmodifiableSet());
+
     Map<Long, HorseDetailOwnerDto> ownerMap;
+
     try {
       ownerMap = ownerService.getAllById(ownerIds);
+
     } catch (NotFoundException e) {
       throw new FatalException("Horse, that is already persisted, refers to non-existing owner", e);
     }
+
     return horses.stream()
         .map(horse -> mapper.entityToListDto(horse, ownerMap));
   }
@@ -129,15 +144,19 @@ public class HorseServiceImpl implements HorseService {
 
   @Override
   public HorseFamilyTreeDto getFamilyTree(long id, int depth) throws NotFoundException, ValidationException {
+
     LOG.trace("getFamilyTree({}, {})", id, depth);
 
     validator.validateGenerations(depth);
 
     Horse horse = dao.getById(id);
+
     return buildFamilyTree(horse, depth);
   }
 
+
   private HorseFamilyTreeDto buildFamilyTree(Horse horse, int depth) throws NotFoundException {
+
     if (horse == null) {
       return null;
     }
@@ -147,13 +166,21 @@ public class HorseServiceImpl implements HorseService {
 
     if (depth > 0) {
       if (horse.motherId() != null) {
-        Horse motherHorse = dao.getById(horse.motherId());
-        mother = buildFamilyTree(motherHorse, depth - 1);
+        try {
+          Horse motherHorse = dao.getById(horse.motherId());
+          mother = buildFamilyTree(motherHorse, depth - 1);
+        } catch (NotFoundException e) {
+          throw new FatalException("Mother with ID " + horse.motherId() + " not found, but was referenced by horse " + horse.id(), e);
+        }
       }
 
       if (horse.fatherId() != null) {
-        Horse fatherHorse = dao.getById(horse.fatherId());
-        father = buildFamilyTree(fatherHorse, depth - 1);
+        try {
+          Horse fatherHorse = dao.getById(horse.fatherId());
+          father = buildFamilyTree(fatherHorse, depth - 1);
+        } catch (NotFoundException e) {
+          throw new FatalException("Father with ID " + horse.fatherId() + " not found, but was referenced by horse " + horse.id(), e);
+        }
       }
     }
 
@@ -168,10 +195,14 @@ public class HorseServiceImpl implements HorseService {
 
 
   @Override
-  public Stream<HorseListDto> search(HorseSearchDto searchParameters) {
+  public Stream<HorseListDto> search(HorseSearchDto searchParameters) throws ValidationException {
+
     LOG.trace("search({})", searchParameters);
 
+    validator.validateForSearch(searchParameters);
+
     List<Horse> horses = dao.search(searchParameters);
+
     if (horses.isEmpty()) {
       return Stream.empty();
     }
@@ -182,19 +213,20 @@ public class HorseServiceImpl implements HorseService {
         .collect(Collectors.toUnmodifiableSet());
 
     Map<Long, HorseDetailOwnerDto> ownerMap;
+
     if (ownerIds.isEmpty()) {
       ownerMap = Collections.emptyMap();
     } else {
       try {
         /*
-        Convert the stream of OwnerDto into a map, where the key is the ownerId and the
-        value the mapped HorseDetailOwnerDto
+        Convert the stream of OwnerDto into a map, where the key is the ownerId and the value the
+        mapped HorseDetailOwnerDto
         */
         ownerMap = ownerService.search(new OwnerSearchDto(searchParameters.ownerName(), ownerIds, Integer.MAX_VALUE))
             .collect(Collectors.toMap(OwnerDto::id, OwnerDto::toHorseDetailOwnerDto));
+
       } catch (ValidationException e) {
-        // TODO: correct exception
-        throw new FatalException("", e);
+        throw new FatalException("OwnerSearchDto validation failed during horse search. This should not happen. Please check mapping logic.", e);
       }
     }
 
@@ -273,12 +305,20 @@ public class HorseServiceImpl implements HorseService {
 
   @Override
   public void delete(long id) throws NotFoundException {
+
     LOG.trace("delete({})", id);
-    dao.delete(id);
+
+    try {
+      dao.delete(id);
+
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
+    }
   }
 
 
   private Map<Long, HorseDetailOwnerDto> ownerMapForSingleId(Long ownerId) {
+
     try {
       return ownerId == null
           ? null

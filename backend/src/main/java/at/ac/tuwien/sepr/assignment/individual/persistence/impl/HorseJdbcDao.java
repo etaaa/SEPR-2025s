@@ -8,6 +8,7 @@ import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
 import at.ac.tuwien.sepr.assignment.individual.exception.FatalException;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
+import at.ac.tuwien.sepr.assignment.individual.exception.PersistenceException;
 import at.ac.tuwien.sepr.assignment.individual.persistence.HorseDao;
 import at.ac.tuwien.sepr.assignment.individual.type.Sex;
 
@@ -22,6 +23,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -32,8 +34,8 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public class HorseJdbcDao implements HorseDao {
-  private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String TABLE_NAME = "horse";
 
   private static final String SQL_SELECT_PARENT_BY_ID =
@@ -85,26 +87,34 @@ public class HorseJdbcDao implements HorseDao {
 
   @Override
   public Horse getById(long id) throws NotFoundException {
+
     LOG.trace("getById({})", id);
-    List<Horse> horses = jdbcClient
-        .sql(SQL_SELECT_ALL + " WHERE id = :id")
-        .param("id", id)
-        .query(this::mapRow)
-        .list();
 
-    if (horses.isEmpty()) {
-      throw new NotFoundException("No horse with ID %d found".formatted(id));
-    }
-    if (horses.size() > 1) {
-      // This should never happen!!
-      throw new FatalException("Too many horses with ID %d found".formatted(id));
-    }
+    try {
+      List<Horse> horses = jdbcClient
+          .sql(SQL_SELECT_ALL + " WHERE id = :id")
+          .param("id", id)
+          .query(this::mapRow)
+          .list();
 
-    return horses.getFirst();
+      if (horses.isEmpty()) {
+        throw new NotFoundException("No horse with ID %d found".formatted(id));
+      }
+      if (horses.size() > 1) {
+        throw new FatalException("Too many horses with ID %d found".formatted(id));
+      }
+
+      return horses.getFirst();
+
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
+    }
   }
+
 
   @Override
   public HorseParentDto getParentById(long id) throws NotFoundException {
+
     /*
     As mentioned in the “Architekturdesign.pdf” slides on page 17, returning a
     DTO is acceptable if an entity doesn’t accurately represent the data. In
@@ -113,53 +123,76 @@ public class HorseJdbcDao implements HorseDao {
     would be null, which is not ideal.
      */
     LOG.trace("getParentById({})", id);
-    List<HorseParentDto> horses = jdbcClient
-        .sql(SQL_SELECT_PARENT_BY_ID)
-        .param("id", id)
-        .query(this::mapParentRow)
-        .list();
 
-    if (horses.isEmpty()) {
-      throw new NotFoundException("No horse with ID %d found".formatted(id));
-    }
-    if (horses.size() > 1) {
-      // This should never happen!!
-      throw new FatalException("Too many horses with ID %d found".formatted(id));
-    }
+    try {
+      List<HorseParentDto> horses = jdbcClient
+          .sql(SQL_SELECT_PARENT_BY_ID)
+          .param("id", id)
+          .query(this::mapParentRow)
+          .list();
 
-    return horses.getFirst();
+      if (horses.isEmpty()) {
+        throw new NotFoundException("No horse with ID %d found".formatted(id));
+      }
+      if (horses.size() > 1) {
+        throw new FatalException("Too many horses with ID %d found".formatted(id));
+      }
+
+      return horses.getFirst();
+
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
+    }
   }
 
 
   @Override
   public HorseImageDto getImageById(long id) throws NotFoundException {
-    List<HorseImageDto> images = jdbcClient
-        .sql(SQL_SELECT_IMAGE_BY_ID)
-        .param("id", id)
-        .query((rs, rowNum) -> new HorseImageDto(rs.getBytes("image"), rs.getString("mime_type")))
-        .list();
 
-    if (images.isEmpty() || images.get(0) == null) {
-      throw new NotFoundException("No image for horse with ID " + id + " found.");
+    LOG.trace("getImageById({})", id);
+
+    try {
+      List<HorseImageDto> images = jdbcClient
+          .sql(SQL_SELECT_IMAGE_BY_ID)
+          .param("id", id)
+          .query((rs, rowNum) -> new HorseImageDto(rs.getBytes("image"), rs.getString("mime_type")))
+          .list();
+
+      if (images.isEmpty() || images.get(0) == null) {
+        throw new NotFoundException("No image for horse with ID %d found.".formatted(id));
+      }
+      if (images.size() > 1) {
+        throw new FatalException("Too many horses with ID %d found".formatted(id));
+      }
+
+      return images.get(0);
+
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
     }
-
-    return images.get(0);
   }
 
 
   @Override
   public List<Horse> getAll() {
+
     LOG.trace("getAll()");
 
-    return jdbcClient
-        .sql(SQL_SELECT_ALL)
-        .query(this::mapRow)
-        .list();
+    try {
+      return jdbcClient
+          .sql(SQL_SELECT_ALL)
+          .query(this::mapRow)
+          .list();
+
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
+    }
   }
 
 
   @Override
   public List<Horse> search(HorseSearchDto searchParameters) {
+
     LOG.trace("search({})", searchParameters);
 
     Map<String, Object> params = new HashMap<>();
@@ -197,109 +230,133 @@ public class HorseJdbcDao implements HorseDao {
       query += " LIMIT :limit";
     }
 
-    return jdbcClient
-        .sql(query)
-        .params(params)
-        .query(this::mapRow)
-        .list();
+    try {
+      return jdbcClient
+          .sql(query)
+          .params(params)
+          .query(this::mapRow)
+          .list();
+
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
+    }
   }
 
   @Override
   public Horse create(HorseCreateDto horse, HorseImageDto horseImage) {
+
     LOG.trace("create({})", horse);
 
     KeyHolder keyHolder = new GeneratedKeyHolder();
 
-    int rowsAffected = jdbcClient.sql(SQL_INSERT)
-        .param("name", horse.name())
-        .param("description", horse.description())
-        .param("date_of_birth", horse.dateOfBirth())
-        .param("sex", horse.sex().toString())
-        .param("owner_id", horse.ownerId())
-        .param("mother_id", horse.motherId())
-        .param("father_id", horse.fatherId())
-        .param("image", horseImage == null ? null : horseImage.image())
-        .param("mime_type", horseImage == null ? null : horseImage.mimeType())
-        .update(keyHolder);
+    try {
+      int rowsAffected = jdbcClient.sql(SQL_INSERT)
+          .param("name", horse.name())
+          .param("description", horse.description())
+          .param("date_of_birth", horse.dateOfBirth())
+          .param("sex", horse.sex().toString())
+          .param("owner_id", horse.ownerId())
+          .param("mother_id", horse.motherId())
+          .param("father_id", horse.fatherId())
+          .param("image", horseImage == null ? null : horseImage.image())
+          .param("mime_type", horseImage == null ? null : horseImage.mimeType())
+          .update(keyHolder);
+      if (rowsAffected == 0 || keyHolder.getKey() == null) {
+        throw new PersistenceException("Failed to insert horse into database");
+      }
 
-    if (rowsAffected == 0 || keyHolder.getKey() == null) {
-      throw new RuntimeException("Failed to insert horse into database");
+      Long id = keyHolder.getKey().longValue();
+
+      return new Horse(
+          id,
+          horse.name(),
+          horse.description(),
+          horse.dateOfBirth(),
+          horse.sex(),
+          horse.ownerId(),
+          horse.motherId(),
+          horse.fatherId(),
+          horseImage == null ? null : "/horses/" + id + "/image"
+      );
+
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
     }
-
-    Long id = keyHolder.getKey().longValue();
-
-    return new Horse(
-        id,
-        horse.name(),
-        horse.description(),
-        horse.dateOfBirth(),
-        horse.sex(),
-        horse.ownerId(),
-        horse.motherId(),
-        horse.fatherId(),
-        horseImage == null ? null : "/horses/" + id + "/image"
-    );
   }
 
 
   @Override
   public Horse update(HorseUpdateDto horse, HorseImageDto horseImage) throws NotFoundException {
+
     // TODO: When we change the gender of a horse, all its children must remove the mother/father connection as that cant be correct anymore.
     LOG.trace("update({})", horse);
 
     if (horseImage == null && !horse.deleteImage()) {
       horseImage = getImageById(horse.id());
     }
-    int updated = jdbcClient
-        .sql(SQL_UPDATE_BY_ID)
-        .param("id", horse.id())
-        .param("name", horse.name())
-        .param("description", horse.description())
-        .param("date_of_birth", horse.dateOfBirth())
-        .param("sex", horse.sex().toString())
-        .param("owner_id", horse.ownerId())
-        .param("mother_id", horse.motherId())
-        .param("father_id", horse.fatherId())
-        .param("image", horseImage == null ? null : horseImage.image())
-        .param("mime_type", horseImage == null ? null : horseImage.mimeType())
-        .update();
 
-    if (updated == 0) {
-      throw new NotFoundException(
-          "Could not update horse with ID " + horse.id() + ", because it does not exist"
+    try {
+      int updated = jdbcClient
+          .sql(SQL_UPDATE_BY_ID)
+          .param("id", horse.id())
+          .param("name", horse.name())
+          .param("description", horse.description())
+          .param("date_of_birth", horse.dateOfBirth())
+          .param("sex", horse.sex().toString())
+          .param("owner_id", horse.ownerId())
+          .param("mother_id", horse.motherId())
+          .param("father_id", horse.fatherId())
+          .param("image", horseImage == null ? null : horseImage.image())
+          .param("mime_type", horseImage == null ? null : horseImage.mimeType())
+          .update();
+
+      if (updated == 0) {
+        throw new NotFoundException(
+            "No horse with ID " + horse.id() + " found to update"
+        );
+      }
+
+      return new Horse(
+          horse.id(),
+          horse.name(),
+          horse.description(),
+          horse.dateOfBirth(),
+          horse.sex(),
+          horse.ownerId(),
+          horse.motherId(),
+          horse.fatherId(),
+          horseImage == null ? null : "/horses/" + horse.id() + "/image"
       );
-    }
 
-    return new Horse(
-        horse.id(),
-        horse.name(),
-        horse.description(),
-        horse.dateOfBirth(),
-        horse.sex(),
-        horse.ownerId(),
-        horse.motherId(),
-        horse.fatherId(),
-        horseImage == null ? null : "/horses/" + horse.id() + "/image"
-    );
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
+    }
   }
 
 
   @Override
   public void delete(long id) throws NotFoundException {
+
     LOG.trace("delete({})", id);
 
-    int rowsAffected = jdbcClient
-        .sql(SQL_DELETE_BY_ID)
-        .param("id", id)
-        .update();
+    try {
+      int rowsAffected = jdbcClient
+          .sql(SQL_DELETE_BY_ID)
+          .param("id", id)
+          .update();
 
-    if (rowsAffected == 0) {
-      throw new NotFoundException("No horse with ID " + id + " found for deletion");
+      if (rowsAffected == 0) {
+        throw new NotFoundException("No horse with ID " + id + " found for deletion");
+      }
+
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
     }
   }
 
 
   private Horse mapRow(ResultSet result, int rownum) throws SQLException {
+
     long id = result.getLong("id");
     boolean hasImage = result.getInt("has_image") == 1;
     String imageUrl = hasImage ? "/horses/" + id + "/image" : null;

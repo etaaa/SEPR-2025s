@@ -47,5 +47,4 @@ public interface OwnerService {
    * @return a stream containing owners matching the criteria in {@code searchParameters}
    */
   Stream<OwnerDto> search(OwnerSearchDto searchParameters) throws ValidationException;
-
 }

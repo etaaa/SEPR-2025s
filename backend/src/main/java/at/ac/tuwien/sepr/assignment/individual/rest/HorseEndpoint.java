@@ -47,7 +47,6 @@ public class HorseEndpoint {
 
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   static final String BASE_PATH = "/horses";
-
   private final HorseService service;
 
   @Autowired
@@ -64,12 +63,17 @@ public class HorseEndpoint {
    */
   @GetMapping("{id}")
   public HorseDetailDto getById(@PathVariable("id") long id) {
+
     LOG.info("GET " + BASE_PATH + "/{}", id);
+
     try {
       return service.getById(id);
+
     } catch (NotFoundException e) {
       HttpStatus status = HttpStatus.NOT_FOUND;
-      logClientError(status, "Horse to get details of not found", e);
+      // TODO: not sure yet why we have to specify an additional message, if the function
+      // TODO: prints the e.getMessage() from the DAO anyways
+      logClientError(status, "Horse with ID %d not found".formatted(id), e);
       throw new ResponseStatusException(status, e.getMessage(), e);
     }
   }
@@ -92,18 +96,20 @@ public class HorseEndpoint {
       HttpHeaders headers = new HttpHeaders();
       headers.setContentType(MediaType.parseMediaType(horseImageDto.mimeType()));
       return new ResponseEntity<>(horseImageDto.image(), headers, HttpStatus.OK);
+
     } catch (NotFoundException e) {
       HttpStatus status = HttpStatus.NOT_FOUND;
-      logClientError(status, "Image for horse with ID " + id + " not found", e);
+      logClientError(status, "Image for horse with ID %d not found".formatted(id), e);
       throw new ResponseStatusException(status, e.getMessage(), e);
     }
-
   }
 
 
   @GetMapping
   public Stream<HorseListDto> getAll() {
+
     LOG.info("GET " + BASE_PATH);
+
     return service.getAll();
   }
 
@@ -115,10 +121,18 @@ public class HorseEndpoint {
    */
   @GetMapping("/search")
   public Stream<HorseListDto> search(HorseSearchDto searchParameters) {
+
     LOG.info("GET " + BASE_PATH);
     LOG.debug("request parameters: {}", searchParameters);
-    System.out.println(searchParameters);
-    return service.search(searchParameters);
+
+    try {
+      return service.search(searchParameters);
+
+    } catch (ValidationException e) {
+      HttpStatus status = HttpStatus.BAD_REQUEST;
+      logClientError(status, "Validation of search parameters failed", e);
+      throw new ResponseStatusException(status, e.getMessage(), e);
+    }
   }
 
 
@@ -131,10 +145,12 @@ public class HorseEndpoint {
 
     try {
       return service.getFamilyTree(id, generations);
+
     } catch (NotFoundException e) {
       HttpStatus status = HttpStatus.NOT_FOUND;
-      logClientError(status, "Horse to get family tree of not found", e);
+      logClientError(status, "Horse with ID %d not found".formatted(id), e);
       throw new ResponseStatusException(status, e.getMessage(), e);
+
     } catch (ValidationException e) {
       HttpStatus status = HttpStatus.BAD_REQUEST;
       logClientError(status, "Invalid generations parameter", e);
@@ -164,6 +180,7 @@ public class HorseEndpoint {
     if (image != null && !image.isEmpty()) {
       try {
         horseImage = new HorseImageDto(image.getBytes(), image.getContentType());
+
       } catch (IOException e) {
         LOG.error("Error while processing the image", e);
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error while processing the image", e);
@@ -172,16 +189,17 @@ public class HorseEndpoint {
 
     try {
       return service.create(toCreate, horseImage);
+
     } catch (ValidationException e) {
       HttpStatus status = HttpStatus.BAD_REQUEST;
       logClientError(status, "Validation of Horse failed", e);
       throw new ResponseStatusException(status, e.getMessage(), e);
+
     } catch (ConflictException e) {
       HttpStatus status = HttpStatus.CONFLICT;
       logClientError(status, "Conflict with existing data", e);
       throw new ResponseStatusException(status, e.getMessage(), e);
     }
-
   }
 
   /**
@@ -209,6 +227,7 @@ public class HorseEndpoint {
     if (image != null && !image.isEmpty()) {
       try {
         horseImage = new HorseImageDto(image.getBytes(), image.getContentType());
+
       } catch (IOException e) {
         LOG.error("Error while processing the image", e);
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error while processing the image", e);
@@ -217,20 +236,22 @@ public class HorseEndpoint {
 
     try {
       return service.update(toUpdate.toUpdateDtoWithId(id), horseImage);
+
     } catch (NotFoundException e) {
       HttpStatus status = HttpStatus.NOT_FOUND;
-      logClientError(status, "Horse to update not found", e);
+      logClientError(status, "Horse with ID %d not found to update".formatted(id), e);
       throw new ResponseStatusException(status, e.getMessage(), e);
+
     } catch (ValidationException e) {
       HttpStatus status = HttpStatus.BAD_REQUEST;
       logClientError(status, "Validation of Horse failed", e);
       throw new ResponseStatusException(status, e.getMessage(), e);
+
     } catch (ConflictException e) {
       HttpStatus status = HttpStatus.CONFLICT;
       logClientError(status, "Conflict with existing data", e);
       throw new ResponseStatusException(status, e.getMessage(), e);
     }
-
   }
 
   /**
@@ -242,12 +263,15 @@ public class HorseEndpoint {
   @DeleteMapping("{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable("id") long id) {
+
     LOG.info("DELETE " + BASE_PATH + "/{}", id);
+
     try {
       service.delete(id);
+
     } catch (NotFoundException e) {
       HttpStatus status = HttpStatus.NOT_FOUND;
-      logClientError(status, "Horse to delete not found", e);
+      logClientError(status, "Horse with ID %d not found to delete".formatted(id), e);
       throw new ResponseStatusException(status, e.getMessage(), e);
     }
   }
@@ -260,6 +284,7 @@ public class HorseEndpoint {
    * @param e       the exception that occurred
    */
   private void logClientError(HttpStatus status, String message, Exception e) {
+
     LOG.warn("{} {}: {}: {}", status.value(), message, e.getClass().getSimpleName(), e.getMessage());
   }
 
