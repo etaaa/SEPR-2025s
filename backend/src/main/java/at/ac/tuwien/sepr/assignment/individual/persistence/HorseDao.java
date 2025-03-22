@@ -7,10 +7,8 @@ import at.ac.tuwien.sepr.assignment.individual.dto.HorseParentDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
-import at.ac.tuwien.sepr.assignment.individual.entity.Owner;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -42,6 +40,10 @@ public interface HorseDao {
    * @throws NotFoundException if no horse or image with the given ID exists in the persistent data store
    */
   HorseImageDto getImageById(long id) throws NotFoundException;
+
+
+  List<Horse> getAll();
+
 
   List<Horse> search(HorseSearchDto searchParameters);
 

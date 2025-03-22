@@ -19,8 +19,9 @@ FROM horse
 where id < 0;
 
 INSERT INTO horse (id, name, description, date_of_birth, sex, owner_id, mother_id, father_id, image, mime_type)
-VALUES (-1, 'Wendys Mother', 'The famous one!', '1970-01-01', 'FEMALE', null, null, null, null, null),
-       (-2, 'Wendys Father', 'The cool one!', '1970-01-01', 'MALE', null, null, null, null, null),
-       (-3, 'Wendy', 'The new one!', '2000-01-01', 'FEMALE', -1, -1, -2, null, null),
-       (-4, 'Wendys first child', 'The first one!', '2020-01-01', 'MALE', -1, -3, null, null, null),
-       (-5, 'Wendys second child', 'The youngest one!', '2025-01-01', 'FEMALE', -1, -3, null, null, null);
+VALUES (-1, 'Wendys Grandfather', 'The famous one!', '1940-01-01', 'MALE', null, null, null, null, null),
+       (-2, 'Wendys Mother', 'The famous one!', '1970-01-01', 'FEMALE', null, null, null, null, null),
+       (-3, 'Wendys Father', 'The cool one!', '1970-01-01', 'MALE', null, null, -1, null, null),
+       (-4, 'Wendy', 'The new one!', '2000-01-01', 'FEMALE', -1, -2, -3, null, null),
+       (-5, 'Wendys child', 'The first one!', '2020-01-01', 'MALE', -1, -4, null, null, null);
+

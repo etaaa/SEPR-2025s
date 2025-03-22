@@ -43,7 +43,7 @@ public class HorseServiceTest {
 
     assertThat(horses)
         .map(HorseListDto::id, HorseListDto::sex)
-        .contains(tuple(-1L, Sex.FEMALE));
+        .contains(tuple(-1L, Sex.MALE));
   }
 
   /**
@@ -88,7 +88,7 @@ public class HorseServiceTest {
 
     assertThat(horse).isNotNull();
     assertThat(horse.id()).isEqualTo(-1L);
-    assertThat(horse.sex()).isEqualTo(Sex.FEMALE);
+    assertThat(horse.sex()).isEqualTo(Sex.MALE);
     assertThat(horse.name()).isNotNull();
     assertThat(horse.dateOfBirth()).isNotNull();
   }

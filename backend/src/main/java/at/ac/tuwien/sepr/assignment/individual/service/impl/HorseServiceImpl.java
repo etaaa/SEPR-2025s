@@ -2,6 +2,8 @@ package at.ac.tuwien.sepr.assignment.individual.service.impl;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailOwnerDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseFamilyTreeDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseListDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseParentDto;
@@ -24,7 +26,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,24 +33,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
 
 /**
  * Implementation of {@link HorseService} for handling image storage and retrieval.
  */
 @Service
 public class HorseServiceImpl implements HorseService {
+
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private final HorseDao dao;
   private final HorseMapper mapper;
   private final HorseValidator validator;
   private final OwnerService ownerService;
 
-
   @Autowired
-  public HorseServiceImpl(HorseDao dao,
-                          HorseMapper mapper,
-                          HorseValidator validator,
-                          OwnerService ownerService) {
+  public HorseServiceImpl(
+      HorseDao dao,
+      HorseMapper mapper,
+      HorseValidator validator,
+      OwnerService ownerService) {
     this.dao = dao;
     this.mapper = mapper;
     this.validator = validator;
@@ -95,8 +98,72 @@ public class HorseServiceImpl implements HorseService {
 
   @Override
   public HorseImageDto getImageById(long id) throws NotFoundException {
+    /*
+     The recursive family tree logic is implemented here in the service layer to keep the persistence layer focused on
+     simple data access. This follows clean architecture principles by separating business logic from database queries,
+     improves testability, and avoids database-specific SQL features.
+     */
     LOG.trace("getImageById({})", id);
     return dao.getImageById(id);
+  }
+
+
+  @Override
+  public Stream<HorseListDto> getAll() {
+    LOG.trace("allHorses()");
+    var horses = dao.getAll();
+    var ownerIds = horses.stream()
+        .map(Horse::ownerId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toUnmodifiableSet());
+    Map<Long, HorseDetailOwnerDto> ownerMap;
+    try {
+      ownerMap = ownerService.getAllById(ownerIds);
+    } catch (NotFoundException e) {
+      throw new FatalException("Horse, that is already persisted, refers to non-existing owner", e);
+    }
+    return horses.stream()
+        .map(horse -> mapper.entityToListDto(horse, ownerMap));
+  }
+
+
+  @Override
+  public HorseFamilyTreeDto getFamilyTree(long id, int depth) throws NotFoundException, ValidationException {
+    LOG.trace("getFamilyTree({}, {})", id, depth);
+
+    validator.validateGenerations(depth);
+
+    Horse horse = dao.getById(id);
+    return buildFamilyTree(horse, depth);
+  }
+
+  private HorseFamilyTreeDto buildFamilyTree(Horse horse, int depth) throws NotFoundException {
+    if (horse == null) {
+      return null;
+    }
+
+    HorseFamilyTreeDto mother = null;
+    HorseFamilyTreeDto father = null;
+
+    if (depth > 0) {
+      if (horse.motherId() != null) {
+        Horse motherHorse = dao.getById(horse.motherId());
+        mother = buildFamilyTree(motherHorse, depth - 1);
+      }
+
+      if (horse.fatherId() != null) {
+        Horse fatherHorse = dao.getById(horse.fatherId());
+        father = buildFamilyTree(fatherHorse, depth - 1);
+      }
+    }
+
+    return new HorseFamilyTreeDto(
+        horse.id(),
+        horse.name(),
+        horse.dateOfBirth(),
+        mother,
+        father
+    );
   }
 
 
@@ -114,16 +181,21 @@ public class HorseServiceImpl implements HorseService {
         .filter(Objects::nonNull)
         .collect(Collectors.toUnmodifiableSet());
 
-    Map<Long, OwnerDto> ownerMap;
+    Map<Long, HorseDetailOwnerDto> ownerMap;
     if (ownerIds.isEmpty()) {
       ownerMap = Collections.emptyMap();
     } else {
-      /*
-      Convert the stream of OwnerDto into a map, where the key is the ownerId and the
-      key the OwnerDto itself (Function.identity())
-      */
-      ownerMap = ownerService.search(new OwnerSearchDto(searchParameters.ownerName(), ownerIds, null))
-          .collect(Collectors.toMap(OwnerDto::id, Function.identity()));
+      try {
+        /*
+        Convert the stream of OwnerDto into a map, where the key is the ownerId and the
+        value the mapped HorseDetailOwnerDto
+        */
+        ownerMap = ownerService.search(new OwnerSearchDto(searchParameters.ownerName(), ownerIds, Integer.MAX_VALUE))
+            .collect(Collectors.toMap(OwnerDto::id, OwnerDto::toHorseDetailOwnerDto));
+      } catch (ValidationException e) {
+        // TODO: correct exception
+        throw new FatalException("", e);
+      }
     }
 
     return horses.stream()
@@ -206,11 +278,11 @@ public class HorseServiceImpl implements HorseService {
   }
 
 
-  private Map<Long, OwnerDto> ownerMapForSingleId(Long ownerId) {
+  private Map<Long, HorseDetailOwnerDto> ownerMapForSingleId(Long ownerId) {
     try {
       return ownerId == null
           ? null
-          : Collections.singletonMap(ownerId, ownerService.getById(ownerId));
+          : Collections.singletonMap(ownerId, ownerService.getById(ownerId).toHorseDetailOwnerDto());
     } catch (NotFoundException e) {
       throw new FatalException("Owner %d referenced by horse not found".formatted(ownerId));
     }

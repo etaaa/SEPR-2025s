@@ -10,7 +10,6 @@ import java.lang.invoke.MethodHandles;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +63,18 @@ public class OwnerJdbcDao implements OwnerDao {
 
 
   @Override
-  public Collection<Owner> search(OwnerSearchDto searchParameters) {
+  public List<Owner> getAll() {
+    LOG.trace("getAll()");
+
+    return jdbcClient
+        .sql(SQL_SELECT_ALL)
+        .query(this::mapRow)
+        .list();
+  }
+
+
+  @Override
+  public List<Owner> search(OwnerSearchDto searchParameters) {
     LOG.trace("search({})", searchParameters);
 
     Map<String, Object> params = new HashMap<>();

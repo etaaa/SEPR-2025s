@@ -45,6 +45,19 @@ public class HorseValidator {
     this.ownerDao = ownerDao;
   }
 
+  public void validateGenerations(int generations) throws ValidationException {
+    LOG.trace("validateGenerations({})", generations);
+    List<String> validationErrors = new ArrayList<>();
+
+    if (generations < 0) {
+      validationErrors.add("Generations must be a non-negative integer");
+    }
+
+    if (!validationErrors.isEmpty()) {
+      throw new ValidationException("Validation of generations parameter failed", validationErrors);
+    }
+  }
+
   /**
    * Validates horse data before a create operation.
    * Ensures required fields are present and valid, such as name, date of birth, and sex.

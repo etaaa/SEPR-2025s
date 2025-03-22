@@ -1,0 +1,65 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.family-tree {
+  list-style: none;
+  padding: 0;
+}
+
+.tree-node {
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #f9f9f9;
+}
+
+.horse-card {
+  padding: 10px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.horse-card h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.horse-card div {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.btn-group {
+  margin-left: auto;
+}
+
+.btn-group .btn {
+  margin-left: 5px;
+}
+
+.parent-label {
+  font-weight: bold;
+  margin-top: 10px;
+  color: #555;
+}
+
+.children {
+  list-style: none;
+  padding-left: 20px;
+  margin-top: 10px;
+}
+
+.children li {
+  margin-top: 10px;
+}
+
+.has-children .node-content:hover {
+  background: #f1f1f1;
+}

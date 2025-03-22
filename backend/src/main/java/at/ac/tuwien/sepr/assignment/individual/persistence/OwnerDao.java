@@ -4,7 +4,7 @@ import at.ac.tuwien.sepr.assignment.individual.dto.OwnerSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Owner;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  * Data Access Object for owners.
@@ -20,6 +20,9 @@ public interface OwnerDao {
    */
   Owner getById(long id) throws NotFoundException;
 
+
+  List<Owner> getAll();
+
   /**
    * Search for owners matching the criteria in {@code searchParameters}.
    *
@@ -32,6 +35,6 @@ public interface OwnerDao {
    * @param searchParameters object containing the search parameters to match
    * @return a stream containing owners matching the criteria in {@code searchParameters}
    */
-  Collection<Owner> search(OwnerSearchDto searchParameters);
+  List<Owner> search(OwnerSearchDto searchParameters);
 
 }

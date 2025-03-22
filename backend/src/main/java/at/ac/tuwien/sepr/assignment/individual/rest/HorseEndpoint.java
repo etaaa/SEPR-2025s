@@ -1,6 +1,7 @@
 package at.ac.tuwien.sepr.assignment.individual.rest;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseFamilyTreeDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseListDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
@@ -55,20 +56,6 @@ public class HorseEndpoint {
   }
 
   /**
-   * Searches for horses based on the given search parameters.
-   *
-   * @param searchParameters the parameters to filter the horse search
-   * @return a stream of {@link HorseListDto} matching the search criteria
-   */
-  @GetMapping
-  public Stream<HorseListDto> search(HorseSearchDto searchParameters) {
-    LOG.info("GET " + BASE_PATH);
-    LOG.debug("request parameters: {}", searchParameters);
-    System.out.println(searchParameters);
-    return service.search(searchParameters);
-  }
-
-  /**
    * Retrieves the details of a horse by its ID.
    *
    * @param id the unique identifier of the horse
@@ -111,6 +98,48 @@ public class HorseEndpoint {
       throw new ResponseStatusException(status, e.getMessage(), e);
     }
 
+  }
+
+
+  @GetMapping
+  public Stream<HorseListDto> getAll() {
+    LOG.info("GET " + BASE_PATH);
+    return service.getAll();
+  }
+
+  /**
+   * Searches for horses based on the given search parameters.
+   *
+   * @param searchParameters the parameters to filter the horse search
+   * @return a stream of {@link HorseListDto} matching the search criteria
+   */
+  @GetMapping("/search")
+  public Stream<HorseListDto> search(HorseSearchDto searchParameters) {
+    LOG.info("GET " + BASE_PATH);
+    LOG.debug("request parameters: {}", searchParameters);
+    System.out.println(searchParameters);
+    return service.search(searchParameters);
+  }
+
+
+  @GetMapping("/{id}/familytree")
+  public HorseFamilyTreeDto getFamilyTree(
+      @PathVariable("id") long id,
+      @RequestParam(name = "generations", defaultValue = "1") int generations) {
+
+    LOG.info("GET " + BASE_PATH + "/{}/familytree?generations={}", id, generations);
+
+    try {
+      return service.getFamilyTree(id, generations);
+    } catch (NotFoundException e) {
+      HttpStatus status = HttpStatus.NOT_FOUND;
+      logClientError(status, "Horse to get family tree of not found", e);
+      throw new ResponseStatusException(status, e.getMessage(), e);
+    } catch (ValidationException e) {
+      HttpStatus status = HttpStatus.BAD_REQUEST;
+      logClientError(status, "Invalid generations parameter", e);
+      throw new ResponseStatusException(status, e.getMessage(), e);
+    }
   }
 
   /**

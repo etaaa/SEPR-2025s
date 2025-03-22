@@ -14,7 +14,7 @@ public record HorseDetailDto(
     String description,
     LocalDate dateOfBirth,
     Sex sex,
-    OwnerDto owner,
+    HorseDetailOwnerDto owner,
     HorseParentDto mother,
     HorseParentDto father,
     String imageUrl

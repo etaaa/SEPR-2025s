@@ -3,6 +3,7 @@ package at.ac.tuwien.sepr.assignment.individual.service;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseFamilyTreeDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseListDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
@@ -37,6 +38,10 @@ public interface HorseService {
    * @throws NotFoundException if no horse with the specified {@code id} exists or if it has no associated image
    */
   HorseImageDto getImageById(long id) throws NotFoundException;
+
+  Stream<HorseListDto> getAll();
+
+  HorseFamilyTreeDto getFamilyTree(long id, int depth) throws NotFoundException, ValidationException;
 
   Stream<HorseListDto> search(HorseSearchDto searchParameters);
 

@@ -10,4 +10,9 @@ public record OwnerDto(
     String lastName,
     String description
 ) {
+
+  public HorseDetailOwnerDto toHorseDetailOwnerDto() {
+    return new HorseDetailOwnerDto(firstName, lastName);
+  }
+
 }

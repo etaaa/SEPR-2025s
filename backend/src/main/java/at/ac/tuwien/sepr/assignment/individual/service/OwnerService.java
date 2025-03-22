@@ -1,8 +1,10 @@
 package at.ac.tuwien.sepr.assignment.individual.service;
 
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailOwnerDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
+import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
 
 import java.util.Collection;
 import java.util.Map;
@@ -21,6 +23,8 @@ public interface OwnerService {
    */
   OwnerDto getById(long id) throws NotFoundException;
 
+  Stream<OwnerDto> getAll();
+
   /**
    * Fetch all owners referenced by the IDs in {@code ids}
    *
@@ -28,7 +32,7 @@ public interface OwnerService {
    * @return a map that contains the requested owners with their IDs as key
    * @throws NotFoundException if any of the requested owners is not found
    */
-  Map<Long, OwnerDto> getAllById(Collection<Long> ids) throws NotFoundException;
+  Map<Long, HorseDetailOwnerDto> getAllById(Collection<Long> ids) throws NotFoundException;
 
   /**
    * Search for owners matching the criteria in {@code searchParameters}.
@@ -42,7 +46,6 @@ public interface OwnerService {
    * @param searchParameters object containing the search parameters to match
    * @return a stream containing owners matching the criteria in {@code searchParameters}
    */
-  Stream<OwnerDto> search(OwnerSearchDto searchParameters);
-
+  Stream<OwnerDto> search(OwnerSearchDto searchParameters) throws ValidationException;
 
 }

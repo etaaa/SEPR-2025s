@@ -1,0 +1,109 @@
+<div class="container mt-4">
+  <div *ngIf="loading" class="text-center">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    Could not load family tree. Please try again later.
+  </div>
+
+  <div *ngIf="!loading && !error && horse">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="display-4">Family Tree of {{ horse.name }}</h1>
+      <div class="btn-group">
+        <a [routerLink]="['/horses', horse.id, 'detail']" class="btn btn-primary">
+          <i class="bi bi-info-lg"></i> Horse Details
+        </a>
+        <a [routerLink]="['/horses']" class="btn btn-secondary">
+          <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="m-0">Family Tree Settings</h3>
+      </div>
+      <div class="card-body">
+        <div class="form-group row">
+          <label for="generations" class="col-sm-3 col-form-label">Maximum Generations:</label>
+          <div class="col-sm-6">
+            <div class="input-group">
+              <input
+                type="number"
+                id="generations"
+                class="form-control"
+                [(ngModel)]="generations"
+                min="1"
+                max="10"
+              >
+              <button
+                class="btn btn-primary"
+                (click)="updateGenerations()"
+              >
+                Update
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="family-tree-container">
+      <ul class="family-tree">
+        <li>
+          <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: horse }"></ng-container>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <ng-template #treeNode let-horse>
+    <div class="tree-node" [class.has-children]="horse.mother || horse.father">
+      <div class="node-content">
+        <div class="horse-card">
+          <div class="d-flex justify-content-between">
+            <h4>{{ horse.name }}</h4>
+            <div class="btn-group">
+              <a class="btn btn-sm btn-outline-primary"
+                 [routerLink]="['/horses', horse.id, 'detail']"
+                 aria-label="Show horse details">
+                <i class="bi bi-info-lg"></i>
+              </a>
+              <button class="btn btn-sm btn-outline-danger" (click)="horseForDeletion = horse"
+                      data-bs-toggle="modal" data-bs-target="#delete-dialog" aria-label="Delete horse">
+                <i class="bi bi-trash"></i>
+              </button>
+              <button *ngIf="horse.mother || horse.father"
+                      class="btn btn-sm btn-outline-secondary"
+                      (click)="toggleExpand(horse)"
+                      aria-label="Toggle expand">
+                <i class="bi" [ngClass]="horse.isExpanded ? 'bi-dash-lg' : 'bi-plus-lg'"></i>
+              </button>
+            </div>
+          </div>
+          <div>Born: {{ formatDate(horse.dateOfBirth) }}</div>
+        </div>
+      </div>
+      <ul *ngIf="(horse.mother || horse.father) && horse.isExpanded" class="children">
+        <li *ngIf="horse.mother">
+          <div class="parent-label">Mother</div>
+          <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: horse.mother }"></ng-container>
+        </li>
+        <li *ngIf="horse.father">
+          <div class="parent-label">Father</div>
+          <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: horse.father }"></ng-container>
+        </li>
+      </ul>
+    </div>
+  </ng-template>
+</div>
+
+<app-confirm-delete-dialog
+  id="delete-dialog"
+  [hidden]="!horseForDeletion"
+  [deleteWhat]="horseForDeletion?.name"
+  (confirm)="deleteHorse(horseForDeletion)">
+</app-confirm-delete-dialog>

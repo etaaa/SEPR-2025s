@@ -1,8 +1,10 @@
 package at.ac.tuwien.sepr.assignment.individual.service.impl;
 
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailOwnerDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
+import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
 import at.ac.tuwien.sepr.assignment.individual.mapper.OwnerMapper;
 import at.ac.tuwien.sepr.assignment.individual.persistence.OwnerDao;
 import at.ac.tuwien.sepr.assignment.individual.service.OwnerService;
@@ -10,7 +12,6 @@ import at.ac.tuwien.sepr.assignment.individual.service.OwnerService;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,16 +24,19 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class OwnerServiceImpl implements OwnerService {
-  private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private final OwnerDao dao;
   private final OwnerMapper mapper;
+  private final OwnerValidator validator;
 
   public OwnerServiceImpl(
       OwnerDao dao,
-      OwnerMapper mapper) {
+      OwnerMapper mapper,
+      OwnerValidator validator) {
     this.dao = dao;
     this.mapper = mapper;
+    this.validator = validator;
   }
 
   /**
@@ -48,6 +52,14 @@ public class OwnerServiceImpl implements OwnerService {
     return mapper.entityToDto(dao.getById(id));
   }
 
+
+  @Override
+  public Stream<OwnerDto> getAll() {
+    LOG.trace("getAll()");
+    return dao.getAll().stream()
+        .map(mapper::entityToDto);
+  }
+
   /**
    * Retrieves multiple owners by their IDs.
    *
@@ -56,12 +68,12 @@ public class OwnerServiceImpl implements OwnerService {
    * @throws NotFoundException if any of the owners are not found
    */
   @Override
-  public Map<Long, OwnerDto> getAllById(Collection<Long> ids) throws NotFoundException {
+  public Map<Long, HorseDetailOwnerDto> getAllById(Collection<Long> ids) throws NotFoundException {
     LOG.trace("getAllById({})", ids);
-    Map<Long, OwnerDto> owners =
+    Map<Long, HorseDetailOwnerDto> owners =
         dao.search(new OwnerSearchDto(null, ids, null)).stream()
             .map(mapper::entityToDto)
-            .collect(Collectors.toUnmodifiableMap(OwnerDto::id, Function.identity()));
+            .collect(Collectors.toUnmodifiableMap(OwnerDto::id, OwnerDto::toHorseDetailOwnerDto));
     for (final var id : ids) {
       if (!owners.containsKey(id)) {
         throw new NotFoundException("Owner with ID %d not found".formatted(id));
@@ -77,8 +89,11 @@ public class OwnerServiceImpl implements OwnerService {
    * @return a stream of matching {@link OwnerDto} objects
    */
   @Override
-  public Stream<OwnerDto> search(OwnerSearchDto searchParameters) {
+  public Stream<OwnerDto> search(OwnerSearchDto searchParameters) throws ValidationException {
     LOG.trace("search({})", searchParameters);
+
+    validator.validateForSearch(searchParameters);
+
     return dao.search(searchParameters).stream()
         .map(mapper::entityToDto);
   }

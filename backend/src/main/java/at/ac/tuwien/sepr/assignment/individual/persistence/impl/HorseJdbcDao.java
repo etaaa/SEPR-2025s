@@ -82,6 +82,7 @@ public class HorseJdbcDao implements HorseDao {
     this.jdbcClient = jdbcClient;
   }
 
+
   @Override
   public Horse getById(long id) throws NotFoundException {
     LOG.trace("getById({})", id);
@@ -129,17 +130,6 @@ public class HorseJdbcDao implements HorseDao {
     return horses.getFirst();
   }
 
-  /*
-  @Override
-  public List<Horse> getAllById(Collection<Long> ids) {
-    LOG.trace("getAllById({})", ids);
-    return jdbcClient
-        .sql(SQL_SELECT_ALL + " WHERE id IN (:ids)")
-        .param("ids", ids)
-        .query(this::mapRow)
-        .list();
-  }
-  */
 
   @Override
   public HorseImageDto getImageById(long id) throws NotFoundException {
@@ -155,6 +145,18 @@ public class HorseJdbcDao implements HorseDao {
 
     return images.get(0);
   }
+
+
+  @Override
+  public List<Horse> getAll() {
+    LOG.trace("getAll()");
+
+    return jdbcClient
+        .sql(SQL_SELECT_ALL)
+        .query(this::mapRow)
+        .list();
+  }
+
 
   @Override
   public List<Horse> search(HorseSearchDto searchParameters) {

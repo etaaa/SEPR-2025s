@@ -66,7 +66,7 @@ public class HorseEndpointTest {
     assertThat(horseResult.size()).isGreaterThanOrEqualTo(1); // We keep this 1 because of the delete test running in parallel
     assertThat(horseResult)
         .extracting(HorseListDto::id, HorseListDto::name)
-        .contains(tuple(-1L, "Wendys Mother"));
+        .contains(tuple(-1L, "Wendys Grandfather"));
   }
 
   /**

@@ -1,4 +1,4 @@
-import {HttpClient, HttpParams} from '@angular/common/http';
+import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
 import {environment} from 'src/environments/environment';
@@ -39,10 +39,11 @@ export class OwnerService {
   }
 
   public searchByName(name: string, limitTo: number): Observable<Owner[]> {
-    const params = new HttpParams()
-      .set('name', name)
-      .set('maxAmount', limitTo);
-    return this.http.get<Owner[]>(baseUri, {params});
+    return this.http.get<Owner[]>(
+      `${baseUri}/search`, {
+        params: {name, maxAmount: limitTo}
+      }
+    );
   }
 
 }

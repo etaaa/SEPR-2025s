@@ -1,9 +1,9 @@
 package at.ac.tuwien.sepr.assignment.individual.mapper;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailOwnerDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseListDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseParentDto;
-import at.ac.tuwien.sepr.assignment.individual.dto.OwnerDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
 import at.ac.tuwien.sepr.assignment.individual.exception.FatalException;
 
@@ -30,7 +30,7 @@ public class HorseMapper {
    * @param owners a map of horse owners by their ID
    * @return the converted {@link HorseListDto}
    */
-  public HorseListDto entityToListDto(Horse horse, Map<Long, OwnerDto> owners) {
+  public HorseListDto entityToListDto(Horse horse, Map<Long, HorseDetailOwnerDto> owners) {
     LOG.trace("entityToDto({})", horse);
     if (horse == null) {
       return null;
@@ -42,8 +42,7 @@ public class HorseMapper {
         horse.description(),
         horse.dateOfBirth(),
         horse.sex(),
-        getOwner(horse, owners),
-        horse.imageUrl()
+        getOwner(horse, owners)
     );
   }
 
@@ -57,7 +56,7 @@ public class HorseMapper {
    */
   public HorseDetailDto entityToDetailDto(
       Horse horse,
-      Map<Long, OwnerDto> owners,
+      Map<Long, HorseDetailOwnerDto> owners,
       HorseParentDto mother,
       HorseParentDto father) {
     LOG.trace("entityToDto({})", horse);
@@ -78,8 +77,8 @@ public class HorseMapper {
     );
   }
 
-  private OwnerDto getOwner(Horse horse, Map<Long, OwnerDto> owners) {
-    OwnerDto owner = null;
+  private HorseDetailOwnerDto getOwner(Horse horse, Map<Long, HorseDetailOwnerDto> owners) {
+    HorseDetailOwnerDto owner = null;
     var ownerId = horse.ownerId();
     if (ownerId != null) {
       if (!owners.containsKey(ownerId)) {
