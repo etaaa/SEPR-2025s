@@ -1,5 +1,6 @@
 package at.ac.tuwien.sepr.assignment.individual.persistence;
 
+import at.ac.tuwien.sepr.assignment.individual.dto.OwnerCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Owner;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
@@ -11,6 +12,7 @@ import java.util.List;
  * Implements CRUD functionality for managing owners in the persistent data store.
  */
 public interface OwnerDao {
+
   /**
    * Fetch an owner from the persistent data store by its ID.
    *
@@ -38,5 +40,5 @@ public interface OwnerDao {
   List<Owner> search(OwnerSearchDto searchParameters);
 
 
-
+  Owner create(OwnerCreateDto owner);
 }

@@ -19,8 +19,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class HorseMapper {
-  private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   /**
    * Converts a {@link Horse} entity into a {@link HorseListDto}.
@@ -31,7 +31,9 @@ public class HorseMapper {
    * @return the converted {@link HorseListDto}
    */
   public HorseListDto entityToListDto(Horse horse, Map<Long, HorseDetailOwnerDto> owners) {
+
     LOG.trace("entityToDto({})", horse);
+
     if (horse == null) {
       return null;
     }
@@ -59,7 +61,9 @@ public class HorseMapper {
       Map<Long, HorseDetailOwnerDto> owners,
       HorseParentDto mother,
       HorseParentDto father) {
+
     LOG.trace("entityToDto({})", horse);
+
     if (horse == null) {
       return null;
     }
@@ -78,7 +82,9 @@ public class HorseMapper {
   }
 
   private HorseDetailOwnerDto getOwner(Horse horse, Map<Long, HorseDetailOwnerDto> owners) {
+
     HorseDetailOwnerDto owner = null;
+
     var ownerId = horse.ownerId();
     if (ownerId != null) {
       if (!owners.containsKey(ownerId)) {
@@ -88,5 +94,4 @@ public class HorseMapper {
     }
     return owner;
   }
-
 }

@@ -74,5 +74,4 @@ public interface HorseDao {
    * @throws NotFoundException if no horse with the given ID exists in the persistent data store
    */
   void delete(long id) throws NotFoundException;
-
 }

@@ -1,8 +1,10 @@
 package at.ac.tuwien.sepr.assignment.individual.service;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailOwnerDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.OwnerCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerSearchDto;
+import at.ac.tuwien.sepr.assignment.individual.exception.ConflictException;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
 import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
 
@@ -14,6 +16,7 @@ import java.util.stream.Stream;
  * Service for working with owners.
  */
 public interface OwnerService {
+
   /**
    * Fetch an owner from the persistent data store by its ID.
    *
@@ -47,4 +50,7 @@ public interface OwnerService {
    * @return a stream containing owners matching the criteria in {@code searchParameters}
    */
   Stream<OwnerDto> search(OwnerSearchDto searchParameters) throws ValidationException;
+
+
+  OwnerDto create(OwnerCreateDto owner) throws ValidationException, ConflictException;
 }

@@ -1,6 +1,7 @@
 package at.ac.tuwien.sepr.assignment.individual.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -36,10 +37,11 @@ public class HorseServiceTest {
    */
   @Test
   public void getAllReturnsAllStoredHorses() {
-    List<HorseListDto> horses = horseService.search(new HorseSearchDto(null, null, null, null, null, null, null))
+
+    List<HorseListDto> horses = horseService.getAll()
         .toList();
 
-    assertThat(horses.size()).isGreaterThanOrEqualTo(1); // TODO: Adapt to exact number of test data entries
+    assertThat(horses.size()).isGreaterThanOrEqualTo(4);
 
     assertThat(horses)
         .map(HorseListDto::id, HorseListDto::sex)

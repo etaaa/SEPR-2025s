@@ -1,8 +1,10 @@
 package at.ac.tuwien.sepr.assignment.individual.service.impl;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseDetailOwnerDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.OwnerCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerSearchDto;
+import at.ac.tuwien.sepr.assignment.individual.exception.ConflictException;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
 import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
 import at.ac.tuwien.sepr.assignment.individual.mapper.OwnerMapper;
@@ -98,4 +100,17 @@ public class OwnerServiceImpl implements OwnerService {
     return dao.search(searchParameters).stream()
         .map(mapper::entityToDto);
   }
+
+
+  @Override
+  public OwnerDto create(OwnerCreateDto owner) throws ValidationException, ConflictException {
+    LOG.trace("create({})", owner);
+
+    validator.validateForCreate(owner);
+
+    var createdOwner = dao.create(owner);
+
+    return mapper.entityToDto(createdOwner);
+  }
+
 }

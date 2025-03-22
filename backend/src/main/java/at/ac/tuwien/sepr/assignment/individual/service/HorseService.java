@@ -75,5 +75,4 @@ public interface HorseService {
    * @throws NotFoundException if no horse with the specified {@code id} exists in the persistent data store
    */
   void delete(long id) throws NotFoundException;
-
 }

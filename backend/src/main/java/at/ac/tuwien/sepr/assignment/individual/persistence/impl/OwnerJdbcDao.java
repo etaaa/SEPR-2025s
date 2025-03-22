@@ -1,5 +1,6 @@
 package at.ac.tuwien.sepr.assignment.individual.persistence.impl;
 
+import at.ac.tuwien.sepr.assignment.individual.dto.OwnerCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Owner;
 import at.ac.tuwien.sepr.assignment.individual.exception.FatalException;
@@ -20,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -127,6 +130,39 @@ public class OwnerJdbcDao implements OwnerDao {
           .params(params)
           .query(this::mapRow)
           .list();
+
+    } catch (DataAccessException e) {
+      throw new PersistenceException("Error accessing database", e);
+    }
+  }
+
+
+  @Override
+  public Owner create(OwnerCreateDto owner) {
+
+    LOG.trace("create({})", owner);
+
+    KeyHolder keyHolder = new GeneratedKeyHolder();
+
+    try {
+      int rowsAffected = jdbcClient.sql(SQL_INSERT)
+          .param("firstName", owner.firstName())
+          .param("lastName", owner.lastName())
+          .param("description", owner.description())
+          .update(keyHolder);
+
+      if (rowsAffected == 0 || keyHolder.getKey() == null) {
+        throw new RuntimeException("Failed to insert owner into database");
+      }
+
+      Long id = keyHolder.getKey().longValue();
+
+      return new Owner(
+          id,
+          owner.firstName(),
+          owner.lastName(),
+          owner.description()
+      );
 
     } catch (DataAccessException e) {
       throw new PersistenceException("Error accessing database", e);

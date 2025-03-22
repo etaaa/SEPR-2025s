@@ -4,7 +4,6 @@ package at.ac.tuwien.sepr.assignment.individual.service.impl;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
-import at.ac.tuwien.sepr.assignment.individual.dto.OwnerSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
 import at.ac.tuwien.sepr.assignment.individual.exception.ConflictException;
 import at.ac.tuwien.sepr.assignment.individual.exception.NotFoundException;
@@ -114,7 +113,6 @@ public class HorseValidator {
     LOG.trace("validateForCreate({})", horse);
 
     List<String> validationErrors = new ArrayList<>();
-    List<String> conflictErrors = new ArrayList<>();
 
     if (horse.name() == null || horse.name().isBlank()) {
       validationErrors.add("Horse name is required and cannot be empty");
@@ -152,6 +150,8 @@ public class HorseValidator {
         validationErrors.add("Owner with ID " + horse.ownerId() + " does not exist");
       }
     }
+
+    List<String> conflictErrors = new ArrayList<>();
 
     if (horse.motherId() != null) {
       try {
@@ -201,7 +201,6 @@ public class HorseValidator {
     LOG.trace("validateForUpdate({})", horse);
 
     List<String> validationErrors = new ArrayList<>();
-    List<String> conflictErrors = new ArrayList<>();
 
     if (horse.id() == null) {
       validationErrors.add("No ID given");
@@ -249,6 +248,8 @@ public class HorseValidator {
         validationErrors.add("Owner with ID " + horse.ownerId() + " does not exist");
       }
     }
+
+    List<String> conflictErrors = new ArrayList<>();
 
     if (horse.motherId() != null) {
       try {
