@@ -94,21 +94,11 @@ export class HorseComponent implements OnInit {
   }
 
   deleteHorse(horse: Horse) {
-    if (horse.id) {
-      this.service.delete(horse.id)
-        .subscribe({
-          next: () => {
-            this.notification.success(`Horse ${horse.name} was deleted`, 'Success');
-            this.reloadHorses();
-          },
-          error: error => {
-            console.error('Error deleting horse', error);
-            const errorMessage = error.status === 0
-              ? 'Is the backend up?'
-              : error.message.message;
-            this.notification.error(errorMessage, `Could Not Delete Horse ${horse.name}`);
-          }
-        });
-    }
+    this.service.deleteHorse(horse).subscribe({
+      next: () => {
+        this.reloadHorses();
+      }
+      // Error handling is already done in the service
+    });
   }
 }

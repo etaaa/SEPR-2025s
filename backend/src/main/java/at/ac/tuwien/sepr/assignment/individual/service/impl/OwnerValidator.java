@@ -103,5 +103,4 @@ public class OwnerValidator {
       throw new ValidationException("Validation of owner for create failed", validationErrors);
     }
   }
-
 }

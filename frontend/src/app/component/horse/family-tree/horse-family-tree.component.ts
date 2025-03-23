@@ -9,6 +9,7 @@ import {Horse} from 'src/app/dto/horse';
 import {HorseService} from 'src/app/service/horse.service';
 import {ConfirmDeleteDialogComponent} from 'src/app/component/confirm-delete-dialog/confirm-delete-dialog.component';
 import {Subscription} from 'rxjs';
+import {ErrorFormatterService} from "../../../service/error-formatter.service";
 
 interface FamilyTreeHorse extends Horse {
   isExpanded?: boolean;
@@ -42,7 +43,8 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private notification: ToastrService,
-    private horseService: HorseService
+    private service: HorseService,
+    private errorFormatter: ErrorFormatterService
   ) {
   }
 
@@ -83,11 +85,14 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
           this.horse = this.processHorseData(data);
           this.loading = false;
         },
-        error: (error) => {
+        error: error => {
           console.error('Error loading family tree', error);
-          this.error = true;
+          this.notification.error(this.errorFormatter.format(error), 'Could not load family tree', {
+            enableHtml: true,
+            timeOut: 10000,
+          });
           this.loading = false;
-          this.notification.error('Could not load family tree', 'Error');
+          this.error = true;
         }
       });
   }
@@ -111,6 +116,11 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
   }
 
   updateGenerations(): void {
+    if (this.generations > 25) {
+      this.notification.error('Maximum generations allowed is 25', 'Invalid Input');
+      return;
+    }
+
     if (this.horse && this.horse.id) {
       this.router.navigate([], {
         relativeTo: this.route,
@@ -127,34 +137,43 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
     }
   }
 
+
+  goBack(): void {
+    this.router.navigate(['/horses']);
+  }
+
+
+  validateGenerations(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = parseInt(input.value, 10);
+    if (value > 25) {
+      input.value = '25';
+      this.generations = 25;
+      this.notification.error('Maximum generations allowed is 25', 'Invalid Input');
+    }
+  }
+
   formatDate(date: Date): string {
     return date.toLocaleDateString();
   }
 
   deleteHorse(horse: Horse): void {
-    if (horse.id) {
-      this.horseService.delete(horse.id).subscribe({
-        next: () => {
-          this.notification.success(`Horse ${horse.name} was deleted`, 'Success');
-          if (horse.id === this.horse?.id) {
-            this.router.navigate(['/horses']);
+    this.service.deleteHorse(horse).subscribe({
+      next: () => {
+        if (horse.id === this.horse?.id) {
+          this.router.navigate(['/horses']);
+        } else {
+          if (this.horse && this.horse.id !== undefined) {
+            this.loadFamilyTree(this.horse.id, this.generations);
           } else {
-            if (this.horse && this.horse.id !== undefined) {
-              this.loadFamilyTree(this.horse.id, this.generations);
-            } else {
-              console.error('Cannot load family tree: Horse ID is missing');
-              this.notification.error('Cannot load family tree', 'Missing horse ID');
-            }
+            console.error('Cannot load family tree: Horse ID is missing');
+            this.notification.error('Cannot load family tree', 'Missing horse ID');
           }
-        },
-        error: error => {
-          console.error('Error deleting horse', error);
-          const errorMessage = error.status === 0
-            ? 'Is the backend up?'
-            : error.message.message;
-          this.notification.error(errorMessage, `Could Not Delete Horse ${horse.name}`);
         }
-      });
-    }
+      },
+      error: () => {
+        // Error handling is already done in the service
+      }
+    });
   }
 }

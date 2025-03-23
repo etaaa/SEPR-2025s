@@ -7,6 +7,7 @@ import {Horse} from 'src/app/dto/horse';
 import {ConfirmDeleteDialogComponent} from 'src/app/component/confirm-delete-dialog/confirm-delete-dialog.component';
 import {environment} from 'src/environments/environment';
 import {Subscription} from 'rxjs';
+import {ErrorFormatterService} from "../../../service/error-formatter.service";
 
 const baseUri = environment.backendUrl;
 
@@ -31,7 +32,8 @@ export class HorseDetailComponent implements OnInit, OnDestroy {
     private service: HorseService,
     private route: ActivatedRoute,
     private router: Router,
-    private notification: ToastrService
+    private notification: ToastrService,
+    private errorFormatter: ErrorFormatterService
   ) {
   }
 
@@ -62,27 +64,25 @@ export class HorseDetailComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: error => {
-        console.error('Error loading horse', error);
-        this.error = true;
+        console.error('Error loading horse details', error);
+        this.notification.error(this.errorFormatter.format(error), 'Could Not Load Horse Details', {
+          enableHtml: true,
+          timeOut: 10000,
+        });
         this.loading = false;
-        this.notification.error('Could not load horse details', 'Error');
+        this.error = true;
       }
     });
   }
 
   deleteHorse(): void {
-    if (this.horse?.id) {
-      this.service.delete(this.horse.id).subscribe({
+    if (this.horse) {
+      this.service.deleteHorse(this.horse).subscribe({
         next: () => {
-          this.notification.success(`Horse ${this.horse?.name} was deleted`, 'Success');
           this.router.navigate(['/horses']);
         },
-        error: error => {
-          console.error('Error deleting horse', error);
-          const errorMessage = error.status === 0
-            ? 'Is the backend up?'
-            : error.message.message;
-          this.notification.error(errorMessage, `Could Not Delete Horse ${this.horse?.name}`);
+        error: () => {
+          // Error handling is already done in the service
         }
       });
     }
@@ -108,5 +108,9 @@ export class HorseDetailComponent implements OnInit, OnDestroy {
       return 'None';
     }
     return `${this.horse.owner.firstName} ${this.horse.owner.lastName}`;
+  }
+
+  goBack(): void {
+    this.router.navigate(['/horses']);
   }
 }

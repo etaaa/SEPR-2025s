@@ -1,8 +1,10 @@
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {map, Observable} from 'rxjs';
+import {tap, catchError} from 'rxjs/operators';
 import {environment} from 'src/environments/environment';
-import {Horse, HorseCreate} from '../dto/horse';
+import {Horse} from '../dto/horse';
+import {ToastrService} from "ngx-toastr";
 
 
 const baseUri = environment.backendUrl + '/horses';
@@ -13,7 +15,8 @@ const baseUri = environment.backendUrl + '/horses';
 export class HorseService {
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private notification: ToastrService
   ) {
   }
 
@@ -108,4 +111,22 @@ export class HorseService {
     return this.http.get<Horse[]>(baseUri, {params});
   }
 
+
+  deleteHorse(horse: Horse): Observable<void> {
+    if (!horse.id) {
+      throw new Error('Horse ID is required for deletion');
+    }
+    return this.delete(horse.id).pipe(
+      tap(() => {
+        this.notification.success(`Horse ${horse.name} was deleted`, 'Success');
+      }),
+      catchError(error => {
+        console.error('Error deleting horse', error);
+        const errorMessage = (error.error && error.error.message) || 'An unknown error occurred';
+        console.log('Backend error message:', errorMessage);
+        this.notification.error(errorMessage, `Could Not Delete Horse ${horse.name}`);
+        throw error;
+      })
+    );
+  }
 }

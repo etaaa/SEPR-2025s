@@ -38,7 +38,7 @@ export class HorseCreateEditComponent implements OnInit {
   mode: HorseCreateEditMode = HorseCreateEditMode.create;
   horse: Horse = {
     name: '',
-    //description: '',
+    description: '',
     dateOfBirth: new Date(),
     sex: Sex.female,
   };
@@ -46,8 +46,7 @@ export class HorseCreateEditComponent implements OnInit {
   selectedFile: File | null = null;
   imageSrc: string | null = null;
   deleteImageOnSubmit = false;
-
-
+  
   constructor(
     private service: HorseService,
     private ownerService: OwnerService,
@@ -97,11 +96,6 @@ export class HorseCreateEditComponent implements OnInit {
     }
   }
 
-  get modeIsCreate(): boolean {
-    return this.mode === HorseCreateEditMode.create;
-  }
-
-
   get sex(): string {
     switch (this.horse.sex) {
       case Sex.male:
@@ -112,7 +106,6 @@ export class HorseCreateEditComponent implements OnInit {
         return '';
     }
   }
-
 
   private get modeActionFinished(): string {
     switch (this.mode) {
@@ -246,7 +239,6 @@ export class HorseCreateEditComponent implements OnInit {
     }
   }
 
-
   public onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -268,6 +260,4 @@ export class HorseCreateEditComponent implements OnInit {
       this.horse.imageUrl = undefined;
     }
   }
-
-
 }

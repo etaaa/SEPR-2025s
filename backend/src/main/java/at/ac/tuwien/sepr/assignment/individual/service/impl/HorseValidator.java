@@ -94,6 +94,9 @@ public class HorseValidator {
     if (generations < 0) {
       validationErrors.add("Generations must be a non-negative integer");
     }
+    if (generations > 2) {
+      validationErrors.add("Generations must not exceed 25");
+    }
 
     if (!validationErrors.isEmpty()) {
       throw new ValidationException("Validation of generations parameter failed", validationErrors);
@@ -304,5 +307,4 @@ public class HorseValidator {
       throw new ConflictException("Conflict with existing data", conflictErrors);
     }
   }
-
 }
