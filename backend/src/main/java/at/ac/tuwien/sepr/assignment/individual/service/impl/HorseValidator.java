@@ -94,7 +94,7 @@ public class HorseValidator {
     if (generations < 0) {
       validationErrors.add("Generations must be a non-negative integer");
     }
-    if (generations > 2) {
+    if (generations > 25) {
       validationErrors.add("Generations must not exceed 25");
     }
 
