@@ -91,7 +91,8 @@ public class HorseJdbcDao implements HorseDao {
 
 
   @Override
-  public Horse getById(long id) throws NotFoundException {
+  public Horse getById(long id)
+      throws NotFoundException {
 
     LOG.trace("getById({})", id);
 
@@ -118,7 +119,8 @@ public class HorseJdbcDao implements HorseDao {
 
 
   @Override
-  public HorseImageDto getImageById(long id) throws NotFoundException {
+  public HorseImageDto getImageById(long id)
+      throws NotFoundException {
 
     LOG.trace("getImageById({})", id);
 
@@ -145,11 +147,12 @@ public class HorseJdbcDao implements HorseDao {
 
 
   @Override
-  public HorseParentDto getParentById(long id) throws NotFoundException {
+  public HorseParentDto getParentById(long id)
+      throws NotFoundException {
 
     /*
     As mentioned in the “Architekturdesign.pdf” slides on page 17, returning a
-    DTO is acceptable if an entity doesn’t accurately represent the data. In
+    DTO is acceptable if an entity doesn't accurately represent the data. In
     this case, since we only need the ID and Name fields, our DTO represents the
     data more precisely. If we were to return an entity instead, many fields
     would be null, which is not ideal.
@@ -309,9 +312,9 @@ public class HorseJdbcDao implements HorseDao {
 
 
   @Override
-  public Horse update(HorseUpdateDto horse, HorseImageDto horseImage) throws NotFoundException {
+  public Horse update(HorseUpdateDto horse, HorseImageDto horseImage)
+      throws NotFoundException {
 
-    // TODO: When we change the gender of a horse, all its children must remove the mother/father connection as that cant be correct anymore.
     LOG.trace("update({})", horse);
 
     if (horseImage == null && !horse.deleteImage()) {
@@ -358,7 +361,8 @@ public class HorseJdbcDao implements HorseDao {
 
 
   @Override
-  public void delete(long id) throws NotFoundException {
+  public void delete(long id)
+      throws NotFoundException {
 
     LOG.trace("delete({})", id);
 
@@ -378,7 +382,8 @@ public class HorseJdbcDao implements HorseDao {
   }
 
 
-  private Horse mapRow(ResultSet result, int rownum) throws SQLException {
+  private Horse mapRow(ResultSet result, int rownum)
+      throws SQLException {
 
     long id = result.getLong("id");
     boolean hasImage = result.getInt("has_image") == 1;
@@ -418,5 +423,4 @@ public class HorseJdbcDao implements HorseDao {
         null
     );
   }
-
 }

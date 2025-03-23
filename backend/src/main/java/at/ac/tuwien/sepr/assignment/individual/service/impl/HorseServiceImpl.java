@@ -62,7 +62,8 @@ public class HorseServiceImpl implements HorseService {
 
 
   @Override
-  public HorseDetailDto getById(long id) throws NotFoundException {
+  public HorseDetailDto getById(long id)
+      throws NotFoundException {
 
     /*
     In this method we won't have to validate the ID (check if there
@@ -102,7 +103,8 @@ public class HorseServiceImpl implements HorseService {
 
 
   @Override
-  public HorseImageDto getImageById(long id) throws NotFoundException {
+  public HorseImageDto getImageById(long id)
+      throws NotFoundException {
 
     /*
      The recursive family tree logic is implemented here in the service
@@ -143,7 +145,8 @@ public class HorseServiceImpl implements HorseService {
 
 
   @Override
-  public HorseFamilyTreeDto getFamilyTree(long id, int depth) throws NotFoundException, ValidationException {
+  public HorseFamilyTreeDto getFamilyTree(long id, int depth)
+      throws NotFoundException, ValidationException {
 
     LOG.trace("getFamilyTree({}, {})", id, depth);
 
@@ -155,7 +158,8 @@ public class HorseServiceImpl implements HorseService {
   }
 
 
-  private HorseFamilyTreeDto buildFamilyTree(Horse horse, int depth) throws NotFoundException {
+  private HorseFamilyTreeDto buildFamilyTree(Horse horse, int depth)
+      throws NotFoundException {
 
     if (horse == null) {
       return null;
@@ -195,7 +199,8 @@ public class HorseServiceImpl implements HorseService {
 
 
   @Override
-  public Stream<HorseListDto> search(HorseSearchDto searchParameters) throws ValidationException {
+  public Stream<HorseListDto> search(HorseSearchDto searchParameters)
+      throws ValidationException {
 
     LOG.trace("search({})", searchParameters);
 
@@ -237,7 +242,8 @@ public class HorseServiceImpl implements HorseService {
 
 
   @Override
-  public HorseDetailDto create(HorseCreateDto horse, HorseImageDto image) throws ValidationException, ConflictException {
+  public HorseDetailDto create(HorseCreateDto horse, HorseImageDto image)
+      throws ValidationException, ConflictException {
     LOG.trace("create({})", horse);
 
     validator.validateForCreate(horse);
@@ -270,7 +276,8 @@ public class HorseServiceImpl implements HorseService {
 
 
   @Override
-  public HorseDetailDto update(HorseUpdateDto horse, HorseImageDto image) throws NotFoundException, ValidationException, ConflictException {
+  public HorseDetailDto update(HorseUpdateDto horse, HorseImageDto image)
+      throws NotFoundException, ValidationException, ConflictException {
     LOG.trace("update({})", horse);
 
     validator.validateForUpdate(horse);
@@ -304,7 +311,8 @@ public class HorseServiceImpl implements HorseService {
 
 
   @Override
-  public void delete(long id) throws NotFoundException {
+  public void delete(long id)
+      throws NotFoundException {
 
     LOG.trace("delete({})", id);
 

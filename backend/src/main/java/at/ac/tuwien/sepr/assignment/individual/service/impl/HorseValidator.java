@@ -34,7 +34,7 @@ public class HorseValidator {
   Note: We use services here instead of DAOs, as directly accessing the DAOs
   would violate the layered architecture. Another advantage is that when
   verifying an ID, for example, we can add extra checks to the getByID()
-  method in the service layer—checks that wouldn’t be applied if we called
+  method in the service layer—checks that wouldn't be applied if we called
   the method directly in the persistence layer.
    */
   private final HorseDao horseDao;

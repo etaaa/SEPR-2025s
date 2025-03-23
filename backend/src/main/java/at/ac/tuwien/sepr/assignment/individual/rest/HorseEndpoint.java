@@ -137,6 +137,7 @@ public class HorseEndpoint {
    *                                 or with HTTP status 409 if there is a conflict with existing data.
    */
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @ResponseStatus(HttpStatus.CREATED)
   public HorseDetailDto create(
       @ModelAttribute HorseCreateDto toCreate,
       @RequestParam(value = "image", required = false) MultipartFile image)
