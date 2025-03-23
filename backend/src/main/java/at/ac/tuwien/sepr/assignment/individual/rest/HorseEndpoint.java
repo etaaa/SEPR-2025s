@@ -62,20 +62,12 @@ public class HorseEndpoint {
    * @throws ResponseStatusException if the horse is not found
    */
   @GetMapping("{id}")
-  public HorseDetailDto getById(@PathVariable("id") long id) {
+  public HorseDetailDto getById(@PathVariable("id") long id)
+      throws NotFoundException {
 
     LOG.info("GET " + BASE_PATH + "/{}", id);
 
-    try {
-      return service.getById(id);
-
-    } catch (NotFoundException e) {
-      HttpStatus status = HttpStatus.NOT_FOUND;
-      // TODO: not sure yet why we have to specify an additional message, if the function
-      // TODO: prints the e.getMessage() from the DAO anyways
-      logClientError(status, "Horse with ID %d not found".formatted(id), e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-    }
+    return service.getById(id);
   }
 
   /**
@@ -87,21 +79,15 @@ public class HorseEndpoint {
    */
   @GetMapping("/{id}/image")
   public ResponseEntity<byte[]> getHorseImage(
-      @PathVariable("id") long id) {
+      @PathVariable("id") long id)
+      throws NotFoundException {
 
     LOG.info("GET image for horse with id {}", id);
 
-    try {
-      HorseImageDto horseImageDto = service.getImageById(id);
-      HttpHeaders headers = new HttpHeaders();
-      headers.setContentType(MediaType.parseMediaType(horseImageDto.mimeType()));
-      return new ResponseEntity<>(horseImageDto.image(), headers, HttpStatus.OK);
-
-    } catch (NotFoundException e) {
-      HttpStatus status = HttpStatus.NOT_FOUND;
-      logClientError(status, "Image for horse with ID %d not found".formatted(id), e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-    }
+    HorseImageDto horseImageDto = service.getImageById(id);
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.parseMediaType(horseImageDto.mimeType()));
+    return new ResponseEntity<>(horseImageDto.image(), headers, HttpStatus.OK);
   }
 
 
@@ -120,42 +106,25 @@ public class HorseEndpoint {
    * @return a stream of {@link HorseListDto} matching the search criteria
    */
   @GetMapping("/search")
-  public Stream<HorseListDto> search(HorseSearchDto searchParameters) {
+  public Stream<HorseListDto> search(HorseSearchDto searchParameters)
+      throws ValidationException {
 
     LOG.info("GET " + BASE_PATH);
     LOG.debug("request parameters: {}", searchParameters);
 
-    try {
-      return service.search(searchParameters);
-
-    } catch (ValidationException e) {
-      HttpStatus status = HttpStatus.BAD_REQUEST;
-      logClientError(status, "Validation of search parameters failed", e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-    }
+    return service.search(searchParameters);
   }
 
 
   @GetMapping("/{id}/familytree")
   public HorseFamilyTreeDto getFamilyTree(
       @PathVariable("id") long id,
-      @RequestParam(name = "generations", defaultValue = "1") int generations) {
+      @RequestParam(name = "generations", defaultValue = "1") int generations)
+      throws NotFoundException, ValidationException {
 
     LOG.info("GET " + BASE_PATH + "/{}/familytree?generations={}", id, generations);
 
-    try {
-      return service.getFamilyTree(id, generations);
-
-    } catch (NotFoundException e) {
-      HttpStatus status = HttpStatus.NOT_FOUND;
-      logClientError(status, "Horse with ID %d not found".formatted(id), e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-
-    } catch (ValidationException e) {
-      HttpStatus status = HttpStatus.BAD_REQUEST;
-      logClientError(status, "Invalid generations parameter", e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-    }
+    return service.getFamilyTree(id, generations);
   }
 
   /**
@@ -171,35 +140,17 @@ public class HorseEndpoint {
   public HorseDetailDto create(
       @ModelAttribute HorseCreateDto toCreate,
       @RequestParam(value = "image", required = false) MultipartFile image)
-      throws ValidationException, ConflictException {
+      throws ValidationException, ConflictException, IOException {
 
     LOG.info("POST " + BASE_PATH + "/{}", toCreate);
     LOG.debug("Body of request:\n{}", toCreate);
 
     HorseImageDto horseImage = null;
     if (image != null && !image.isEmpty()) {
-      try {
-        horseImage = new HorseImageDto(image.getBytes(), image.getContentType());
-
-      } catch (IOException e) {
-        LOG.error("Error while processing the image", e);
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error while processing the image", e);
-      }
+      horseImage = new HorseImageDto(image.getBytes(), image.getContentType());
     }
 
-    try {
-      return service.create(toCreate, horseImage);
-
-    } catch (ValidationException e) {
-      HttpStatus status = HttpStatus.BAD_REQUEST;
-      logClientError(status, "Validation of Horse failed", e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-
-    } catch (ConflictException e) {
-      HttpStatus status = HttpStatus.CONFLICT;
-      logClientError(status, "Conflict with existing data", e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-    }
+    return service.create(toCreate, horseImage);
   }
 
   /**
@@ -218,40 +169,17 @@ public class HorseEndpoint {
       @PathVariable("id") long id,
       @ModelAttribute HorseUpdateRestDto toUpdate,
       @RequestParam(value = "image", required = false) MultipartFile image)
-      throws ValidationException, ConflictException {
+      throws NotFoundException, ValidationException, ConflictException, IOException {
 
     LOG.info("PUT " + BASE_PATH + "/{}", toUpdate);
     LOG.debug("Body of request:\n{}", toUpdate);
 
     HorseImageDto horseImage = null;
     if (image != null && !image.isEmpty()) {
-      try {
-        horseImage = new HorseImageDto(image.getBytes(), image.getContentType());
-
-      } catch (IOException e) {
-        LOG.error("Error while processing the image", e);
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error while processing the image", e);
-      }
+      horseImage = new HorseImageDto(image.getBytes(), image.getContentType());
     }
 
-    try {
-      return service.update(toUpdate.toUpdateDtoWithId(id), horseImage);
-
-    } catch (NotFoundException e) {
-      HttpStatus status = HttpStatus.NOT_FOUND;
-      logClientError(status, "Horse with ID %d not found to update".formatted(id), e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-
-    } catch (ValidationException e) {
-      HttpStatus status = HttpStatus.BAD_REQUEST;
-      logClientError(status, "Validation of Horse failed", e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-
-    } catch (ConflictException e) {
-      HttpStatus status = HttpStatus.CONFLICT;
-      logClientError(status, "Conflict with existing data", e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-    }
+    return service.update(toUpdate.toUpdateDtoWithId(id), horseImage);
   }
 
   /**
@@ -262,30 +190,11 @@ public class HorseEndpoint {
    */
   @DeleteMapping("{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void delete(@PathVariable("id") long id) {
+  public void delete(@PathVariable("id") long id)
+      throws NotFoundException {
 
     LOG.info("DELETE " + BASE_PATH + "/{}", id);
 
-    try {
-      service.delete(id);
-
-    } catch (NotFoundException e) {
-      HttpStatus status = HttpStatus.NOT_FOUND;
-      logClientError(status, "Horse with ID %d not found to delete".formatted(id), e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-    }
+    service.delete(id);
   }
-
-  /**
-   * Logs client-side errors with relevant details.
-   *
-   * @param status  the HTTP status code of the error
-   * @param message a brief message describing the error
-   * @param e       the exception that occurred
-   */
-  private void logClientError(HttpStatus status, String message, Exception e) {
-
-    LOG.warn("{} {}: {}: {}", status.value(), message, e.getClass().getSimpleName(), e.getMessage());
-  }
-
 }

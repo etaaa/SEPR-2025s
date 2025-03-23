@@ -12,14 +12,12 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * REST controller for managing owner-related operations.
@@ -53,52 +51,22 @@ public class OwnerEndpoint {
    * @return a stream of {@link OwnerDto} matching the search criteria
    */
   @GetMapping("/search")
-  public Stream<OwnerDto> search(OwnerSearchDto searchParameters) {
+  public Stream<OwnerDto> search(OwnerSearchDto searchParameters)
+      throws ValidationException {
 
     LOG.info("GET " + BASE_PATH + " query parameters: {}", searchParameters);
 
-    try {
-      return service.search(searchParameters);
-
-    } catch (ValidationException e) {
-      HttpStatus status = HttpStatus.BAD_REQUEST;
-      logClientError(status, "Validation of search parameters failed", e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-    }
+    return service.search(searchParameters);
   }
 
 
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-  public OwnerDto create(@RequestBody OwnerCreateDto toCreate) {
+  public OwnerDto create(@RequestBody OwnerCreateDto toCreate)
+      throws ConflictException, ValidationException {
 
     LOG.info("POST " + BASE_PATH + "/{}", toCreate);
     LOG.debug("Body of request:\n{}", toCreate);
 
-    try {
-      return service.create(toCreate);
-
-    } catch (ValidationException e) {
-      HttpStatus status = HttpStatus.BAD_REQUEST;
-      logClientError(status, "Validation of Owner failed", e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-
-    } catch (ConflictException e) {
-      HttpStatus status = HttpStatus.CONFLICT;
-      logClientError(status, "Conflict with existing data", e);
-      throw new ResponseStatusException(status, e.getMessage(), e);
-    }
+    return service.create(toCreate);
   }
-
-  /**
-   * Logs client-side errors with relevant details.
-   *
-   * @param status  the HTTP status code of the error
-   * @param message a brief message describing the error
-   * @param e       the exception that occurred
-   */
-  private void logClientError(HttpStatus status, String message, Exception e) {
-
-    LOG.warn("{} {}: {}: {}", status.value(), message, e.getClass().getSimpleName(), e.getMessage());
-  }
-
 }
