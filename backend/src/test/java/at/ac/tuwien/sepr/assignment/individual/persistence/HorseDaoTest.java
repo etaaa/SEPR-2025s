@@ -19,12 +19,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Integration test for {@link HorseDao}, ensuring database operations function correctly.
  */
 @ActiveProfiles({"test", "datagen"}) // Enables "test" Spring profile to load test data
 @SpringBootTest
+@Transactional
 public class HorseDaoTest {
 
   @Autowired
@@ -36,96 +38,149 @@ public class HorseDaoTest {
    */
   @Test
   public void getAllReturnsAllStoredHorses() {
-    List<Horse> horses = horseDao.search(new HorseSearchDto(null, null, null, null, null, null, null));
-    assertThat(horses.size()).isGreaterThanOrEqualTo(3); // TODO adapt to exact number of elements in test data later
+
+    List<Horse> horses = horseDao.getAll();
+    assertThat(horses.size()).isGreaterThanOrEqualTo(10); // TODO adapt to exact number of elements in test data later
     assertThat(horses)
         .extracting(Horse::id, Horse::name)
-        .contains(tuple(-1L, "Wendys Grandfather"));
+        .contains(tuple(-1L, "Wendys Grandmother"));
   }
 
   /**
-   * Tests successful retrieval of an existing horse by ID.
-   * Verifies that all fields contain the expected data.
+   * Positive test: Creates a new horse and verifies it was persisted correctly.
    */
   @Test
-  public void getByIdWithExistingIdSucceeds() throws NotFoundException {
-    Horse horse = horseDao.getById(-1L);
+  public void createHorseSuccessfully() {
 
-    assertThat(horse).isNotNull();
-    assertThat(horse.id()).isEqualTo(-1L);
-    assertThat(horse.sex()).isEqualTo(Sex.MALE);
-    assertThat(horse.name()).isNotNull();
-    assertThat(horse.dateOfBirth()).isNotNull();
-  }
-
-  /**
-   * Tests successful creation of a new horse in the persistent store.
-   * Verifies that the created horse is returned with correct details.
-   */
-  @Test
-  public void createHorseWithValidDataSucceeds() {
     HorseCreateDto createDto = new HorseCreateDto(
         "Test Horse",
-        "Test Description",
-        LocalDate.of(2020, 1, 1),
+        "A test horse",
+        LocalDate.of(2023, 1, 1),
         Sex.MALE,
-        null,
-        null,
-        null
+        -1L,
+        -3L, // Wendys Mother
+        -4L  // Wendys Father
     );
     HorseImageDto imageDto = new HorseImageDto(
         new byte[] {1, 2, 3},
-        "image/jpeg"
+        "image/png"
     );
 
-    Horse createdHorse = horseDao.create(createDto, imageDto);
+    Horse created = horseDao.create(createDto, imageDto);
 
-    assertThat(createdHorse).isNotNull();
-    assertThat(createdHorse.id()).isNotNull().isPositive();
-    assertThat(createdHorse.name()).isEqualTo("Test Horse");
-    assertThat(createdHorse.description()).isEqualTo("Test Description");
-    assertThat(createdHorse.dateOfBirth()).isEqualTo(LocalDate.of(2020, 1, 1));
-    assertThat(createdHorse.sex()).isEqualTo(Sex.MALE);
-    assertThat(createdHorse.ownerId()).isNull();
-    assertThat(createdHorse.imageUrl()).isEqualTo("/horses/" + createdHorse.id() + "/image");
+    assertThat(created).isNotNull();
+    assertThat(created.id()).isPositive();
+    assertThat(created.name()).isEqualTo("Test Horse");
+    assertThat(created.description()).isEqualTo("A test horse");
+    assertThat(created.dateOfBirth()).isEqualTo(LocalDate.of(2023, 1, 1));
+    assertThat(created.sex()).isEqualTo(Sex.MALE);
+    assertThat(created.ownerId()).isEqualTo(-1L);
+    assertThat(created.motherId()).isEqualTo(-3L);
+    assertThat(created.fatherId()).isEqualTo(-4L);
+    assertThat(created.imageUrl()).isEqualTo("/horses/" + created.id() + "/image");
   }
 
   /**
-   * Tests retrieval of a horse with a non-existing ID.
-   * Verifies that a NotFoundException is thrown.
+   * Positive test: Retrieves a horse by ID and verifies all fields.
    */
   @Test
-  public void getByIdWithNonExistingIdFails() {
-    assertThrows(NotFoundException.class, () -> {
-      horseDao.getById(999L);
-    });
+  public void getByIdReturnsCorrectHorse() throws NotFoundException {
+
+    Horse horse = horseDao.getById(-6L); // Wendy
+
+    assertThat(horse).isNotNull();
+    assertThat(horse.id()).isEqualTo(-6L);
+    assertThat(horse.name()).isEqualTo("Wendy");
+    assertThat(horse.description()).isEqualTo("The new one!");
+    assertThat(horse.dateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 1));
+    assertThat(horse.sex()).isEqualTo(Sex.FEMALE);
+    assertThat(horse.ownerId()).isEqualTo(-1L);
+    assertThat(horse.motherId()).isEqualTo(-3L);
+    assertThat(horse.fatherId()).isEqualTo(-4L);
+    assertThat(horse.imageUrl()).isNull();
   }
 
   /**
-   * Tests update of a non-existing horse.
-   * Verifies that a NotFoundException is thrown.
+   * Negative test: Attempts to retrieve a non-existent horse and expects NotFoundException.
    */
   @Test
-  public void updateHorseWithNonExistingIdFails() {
+  public void getByIdNonExistentThrowsNotFoundException() {
+
+    NotFoundException exception = assertThrows(NotFoundException.class,
+        () -> horseDao.getById(999L)
+    );
+    assertThat(exception.getMessage()).contains("No horse with ID 999 found");
+  }
+
+  /**
+   * Negative test: Attempts to delete a non-existent horse and expects NotFoundException.
+   */
+  @Test
+  public void deleteNonExistentHorseThrowsNotFoundException() {
+
+    NotFoundException exception = assertThrows(NotFoundException.class,
+        () -> horseDao.delete(999L)
+    );
+    assertThat(exception.getMessage()).contains("No horse with ID 999 found for deletion");
+  }
+
+  /**
+   * Positive test: Updates an existing horse and verifies the changes.
+   *
+   * @throws NotFoundException if the horse with ID -7 does not exist (unexpected in test data)
+   */
+  @Test
+  public void updateHorseSuccessfully() throws NotFoundException {
+
     HorseUpdateDto updateDto = new HorseUpdateDto(
-        999L,
-        "Updated Horse",
-        "Updated Description",
-        LocalDate.of(2020, 1, 1),
-        Sex.FEMALE,
-        null,
+        -7L, // Wendys Husband
+        "Updated Husband",
+        "The updated strong one!",
+        LocalDate.of(2000, 1, 1),
+        Sex.MALE,
+        -2L,
         null,
         null,
         false
     );
     HorseImageDto imageDto = new HorseImageDto(
         new byte[] {4, 5, 6},
-        "image/png"
+        "image/jpeg"
     );
 
-    assertThrows(NotFoundException.class, () -> {
-      horseDao.update(updateDto, imageDto);
-    });
+    Horse updated = horseDao.update(updateDto, imageDto);
+
+    assertThat(updated).isNotNull();
+    assertThat(updated.id()).isEqualTo(-7L);
+    assertThat(updated.name()).isEqualTo("Updated Husband");
+    assertThat(updated.description()).isEqualTo("The updated strong one!");
+    assertThat(updated.dateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 1));
+    assertThat(updated.sex()).isEqualTo(Sex.MALE);
+    assertThat(updated.ownerId()).isEqualTo(-2L);
+    assertThat(updated.motherId()).isNull();
+    assertThat(updated.fatherId()).isNull();
+    assertThat(updated.imageUrl()).isEqualTo("/horses/-7/image");
   }
 
+  /**
+   * Negative test: Searches for horses with impossible criteria and expects empty result.
+   */
+  @Test
+  public void searchWithImpossibleCriteriaReturnsEmptyList() {
+
+    HorseSearchDto searchDto = new HorseSearchDto(
+        "NonExistentHorse123",
+        null,
+        null,
+        Sex.FEMALE,
+        null,
+        null,
+        5
+    );
+
+    List<Horse> results = horseDao.search(searchDto);
+
+    assertThat(results).isNotNull();
+    assertThat(results).isEmpty();
+  }
 }
