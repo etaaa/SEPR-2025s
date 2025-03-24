@@ -27,7 +27,13 @@ export class HorseComponent implements OnInit {
   horses: Horse[] = [];
   bannerError: string | null = null;
   horseForDeletion: Horse | undefined;
-  searchFilter = {
+  searchFilter: {
+    name?: string,
+    description?: string,
+    dateOfBirth?: string,
+    sex?: string,
+    owner?: string
+  } = {
     name: '',
     description: '',
     dateOfBirth: '',
@@ -48,7 +54,7 @@ export class HorseComponent implements OnInit {
 
   ownerSuggestions = (input: string): Observable<Owner[]> => (input === '')
     ? of([])
-    : this.ownerService.searchByName(input, 5);
+    : this.ownerService.searchByName(input);
 
   formatOwnerName(owner: Owner | string | null | undefined): string {
     if (!owner) {
@@ -61,7 +67,8 @@ export class HorseComponent implements OnInit {
   }
 
   reloadHorses() {
-    this.service.getAll(this.searchFilter)
+    console.log('searchFilter:', this.searchFilter);
+    this.service.getAllOrSearch(this.searchFilter)
       .subscribe({
         next: data => {
           this.horses = data;

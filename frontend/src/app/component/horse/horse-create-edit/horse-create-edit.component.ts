@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {CommonModule} from '@angular/common';
+import {CommonModule, Location} from '@angular/common';
 import {FormsModule, NgForm, NgModel} from '@angular/forms';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ToastrService} from 'ngx-toastr';
@@ -46,14 +46,15 @@ export class HorseCreateEditComponent implements OnInit {
   selectedFile: File | null = null;
   imageSrc: string | null = null;
   deleteImageOnSubmit = false;
-  
+
   constructor(
     private service: HorseService,
     private ownerService: OwnerService,
     private router: Router,
     private route: ActivatedRoute,
     private notification: ToastrService,
-    private errorFormatter: ErrorFormatterService
+    private errorFormatter: ErrorFormatterService,
+    private location: Location
   ) {
   }
 
@@ -73,7 +74,7 @@ export class HorseCreateEditComponent implements OnInit {
       case HorseCreateEditMode.create:
         return 'Create';
       case HorseCreateEditMode.edit:
-        return 'Edit';
+        return 'Save';
       default:
         return '?';
     }
@@ -120,15 +121,19 @@ export class HorseCreateEditComponent implements OnInit {
 
   ownerSuggestions = (input: string) => (input === '')
     ? of([])
-    : this.ownerService.searchByName(input, 5);
+    : this.ownerService.searchByName(input);
 
   motherSuggestions = (input: string) => (input === '')
     ? of([])
-    : this.service.searchByName(input, 5, 'FEMALE', this.horse.id!);
+    : this.service.getAllOrSearch({name: input, limit: 5, sex: 'FEMALE', excludeId: this.horse.id!});
 
   fatherSuggestions = (input: string) => (input === '')
     ? of([])
-    : this.service.searchByName(input, 5, 'MALE', this.horse.id!);
+    : this.service.getAllOrSearch({name: input, limit: 5, sex: 'MALE', excludeId: this.horse.id!});
+
+  public onCancel(): void {
+    this.location.back();
+  }
 
   ngOnInit(): void {
     this.route.data.subscribe(data => {

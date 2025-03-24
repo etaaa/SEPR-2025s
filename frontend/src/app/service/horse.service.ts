@@ -20,27 +20,46 @@ export class HorseService {
   ) {
   }
 
+  getById(id: number): Observable<Horse> {
+    return this.http.get<Horse>(
+      `${baseUri}/${id}`
+    ).pipe(
+      map(this.fixHorseDate)
+    );
+  }
+
   /**
-   * Get all horses stored in the system
+   * Retrieve horses from the system, optionally filtered by criteria
    *
-   * @return observable list of found horses.
+   * @param filters Optional criteria to filter horses, including limit and excludeId
+   * @return observable list of found horses
    */
-  getAll(filters: {
+  getAllOrSearch(filters: {
     name?: string,
     description?: string,
     dateOfBirth?: string,
     sex?: string,
-    owner?: string
+    owner?: string,
+    limit?: number,
+    excludeId?: number
   } = {}): Observable<Horse[]> {
     let params = new HttpParams();
 
-    if (filters.name) params = params.set('name', filters.name);
-    if (filters.description) params = params.set('description', filters.description);
-    if (filters.dateOfBirth) params = params.set('dateOfBirth', filters.dateOfBirth);
-    if (filters.sex) params = params.set('sex', filters.sex);
-    if (filters.owner) params = params.set('ownerName', filters.owner);
+    let url = baseUri
+    const hasFilters = Object.values(filters).some(val => val !== undefined && val !== null && val !== '');
 
-    return this.http.get<Horse[]>(baseUri, {params})
+    if (hasFilters) {
+      if (filters.name) params = params.set('name', filters.name);
+      if (filters.description) params = params.set('description', filters.description);
+      if (filters.dateOfBirth) params = params.set('dateOfBirth', filters.dateOfBirth);
+      if (filters.sex) params = params.set('sex', filters.sex);
+      if (filters.owner) params = params.set('ownerName', filters.owner);
+      params = params.set('limit', (filters.limit !== undefined ? filters.limit : 100).toString());
+      if (filters.excludeId !== undefined) params = params.set('excludeId', filters.excludeId.toString());
+      url += "/search";
+    }
+
+    return this.http.get<Horse[]>(url, {params})
       .pipe(
         map(horses => horses.map(this.fixHorseDate))
       );
@@ -69,14 +88,6 @@ export class HorseService {
     );
   }
 
-  getById(id: number): Observable<Horse> {
-    return this.http.get<Horse>(
-      `${baseUri}/${id}`
-    ).pipe(
-      map(this.fixHorseDate)
-    );
-  }
-
   update(id: number, formData: FormData): Observable<Horse> {
     return this.http.put<Horse>(
       `${baseUri}/${id}`,
@@ -91,26 +102,6 @@ export class HorseService {
       `${baseUri}/${id}`
     );
   }
-
-  private fixHorseDate(horse: Horse): Horse {
-    // Parse the string to a Date
-    horse.dateOfBirth = new Date(horse.dateOfBirth as unknown as string);
-    return horse;
-  }
-
-  public searchByName(name: string, limit: number, sex: string, excludeId: number): Observable<Horse[]> {
-    let params = new HttpParams()
-      .set('name', name)
-      .set('limit', limit)
-      .set('sex', sex);
-
-    if (excludeId !== undefined) {
-      params = params.set('excludeId', excludeId.toString());
-    }
-
-    return this.http.get<Horse[]>(baseUri, {params});
-  }
-
 
   deleteHorse(horse: Horse): Observable<void> {
     if (!horse.id) {
@@ -128,5 +119,11 @@ export class HorseService {
         throw error;
       })
     );
+  }
+
+  private fixHorseDate(horse: Horse): Horse {
+    // Parse the string to a Date
+    horse.dateOfBirth = new Date(horse.dateOfBirth as unknown as string);
+    return horse;
   }
 }

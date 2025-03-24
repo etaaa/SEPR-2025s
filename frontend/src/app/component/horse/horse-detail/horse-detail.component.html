@@ -9,7 +9,7 @@
     Could not load horse details. Please try again later.
     <div class="mt-2">
       <button class="btn btn-secondary" (click)="goBack()">
-        <i class="bi bi-arrow-left"></i> Back to Horses List
+        <i class="bi bi-arrow-left"></i> Back
       </button>
     </div>
   </div>
@@ -27,8 +27,8 @@
         <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#delete-dialog">
           <i class="bi bi-trash"></i> Delete
         </button>
-        <a [routerLink]="['/horses']" class="btn btn-secondary">
-          <i class="bi bi-arrow-left"></i> Back to List
+        <a class="btn btn-secondary" (click)="goBack()">
+          <i class="bi bi-arrow-left"></i> Back
         </a>
       </div>
     </div>

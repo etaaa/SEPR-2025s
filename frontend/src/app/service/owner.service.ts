@@ -25,6 +25,14 @@ export class OwnerService {
     return this.http.get<Owner[]>(baseUri);
   }
 
+  public searchByName(name: string): Observable<Owner[]> {
+    return this.http.get<Owner[]>(
+      `${baseUri}/search`, {
+        params: {name: name, limit: 5}
+      }
+    );
+  }
+
   /**
    * Create a new owner in the system.
    *
@@ -37,13 +45,4 @@ export class OwnerService {
       owner
     );
   }
-
-  public searchByName(name: string, limitTo: number): Observable<Owner[]> {
-    return this.http.get<Owner[]>(
-      `${baseUri}/search`, {
-        params: {name, maxAmount: limitTo}
-      }
-    );
-  }
-
 }

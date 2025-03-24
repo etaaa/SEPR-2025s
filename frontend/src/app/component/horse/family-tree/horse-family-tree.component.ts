@@ -1,5 +1,5 @@
 import {Component, OnInit, OnDestroy} from '@angular/core';
-import {CommonModule} from '@angular/common';
+import {CommonModule, Location} from '@angular/common';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {FormsModule} from '@angular/forms';
 import {HttpClient, HttpParams} from '@angular/common/http';
@@ -44,7 +44,8 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
     private router: Router,
     private notification: ToastrService,
     private service: HorseService,
-    private errorFormatter: ErrorFormatterService
+    private errorFormatter: ErrorFormatterService,
+    private location: Location
   ) {
   }
 
@@ -70,6 +71,10 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
     if (this.routeSubscription) {
       this.routeSubscription.unsubscribe();
     }
+  }
+
+  public onCancel(): void {
+    this.location.back();
   }
 
   loadFamilyTree(id: number, generations: number): void {
@@ -137,11 +142,9 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
     }
   }
 
-
-  goBack(): void {
-    this.router.navigate(['/horses']);
+  public goBack(): void {
+    this.location.back();
   }
-
 
   validateGenerations(event: Event): void {
     const input = event.target as HTMLInputElement;

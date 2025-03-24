@@ -5,6 +5,7 @@ import {ToastrService} from 'ngx-toastr';
 import {Owner} from 'src/app/dto/owner';
 import {ErrorFormatterService} from 'src/app/service/error-formatter.service';
 import {OwnerService} from 'src/app/service/owner.service';
+import {Location} from "@angular/common";
 
 @Component({
   selector: 'app-owner-create',
@@ -27,7 +28,8 @@ export class OwnerCreateComponent {
     private service: OwnerService,
     private router: Router,
     private notification: ToastrService,
-    private errorFormatter: ErrorFormatterService
+    private errorFormatter: ErrorFormatterService,
+    private location: Location
   ) {
   }
 
@@ -35,6 +37,10 @@ export class OwnerCreateComponent {
     return {
       'is-invalid': !input.valid && !input.pristine,
     };
+  }
+
+  public onCancel(): void {
+    this.location.back();
   }
 
   public onSubmit(form: NgForm): void {

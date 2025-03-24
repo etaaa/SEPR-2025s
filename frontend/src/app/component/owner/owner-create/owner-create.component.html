@@ -58,7 +58,13 @@
     </div>
   </div>
 
-  <div class="mt-4 d-flex flex-row">
+  <div class="mt-4 d-flex flex-row gap-2">
+    <button
+      class="btn btn-secondary"
+      type="button"
+      (click)="onCancel()">
+      Cancel
+    </button>
     <button
       class="btn btn-primary"
       [disabled]="!form.valid"
@@ -66,4 +72,5 @@
       Create
     </button>
   </div>
+
 </form>

@@ -1,5 +1,5 @@
 import {Component, OnInit, OnDestroy} from '@angular/core';
-import {CommonModule} from '@angular/common';
+import {CommonModule, Location} from '@angular/common';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {ToastrService} from 'ngx-toastr';
 import {HorseService} from 'src/app/service/horse.service';
@@ -33,7 +33,8 @@ export class HorseDetailComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private notification: ToastrService,
-    private errorFormatter: ErrorFormatterService
+    private errorFormatter: ErrorFormatterService,
+    private location: Location
   ) {
   }
 
@@ -110,7 +111,7 @@ export class HorseDetailComponent implements OnInit, OnDestroy {
     return `${this.horse.owner.firstName} ${this.horse.owner.lastName}`;
   }
 
-  goBack(): void {
-    this.router.navigate(['/horses']);
+  public goBack(): void {
+    this.location.back();
   }
 }
