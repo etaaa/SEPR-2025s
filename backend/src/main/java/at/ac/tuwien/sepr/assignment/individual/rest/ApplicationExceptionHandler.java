@@ -14,7 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -75,14 +77,13 @@ public class ApplicationExceptionHandler {
   }
 
 
-  @ExceptionHandler
+  @ExceptionHandler(HttpMessageNotReadableException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   @ResponseBody
-  public ErrorDto handleIOException(IOException e) {
-
-    LOG.warn("400 IO error [r={}]: {}: {}", MDC.get("r"), e.getClass().getSimpleName(), e.getMessage());
-
-    return new ErrorDto("An error occurred while processing the request: " + e.getMessage());
+  public ErrorDto handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+    String message = "Invalid JSON format: " + e.getLocalizedMessage();
+    LOG.warn("400 Malformed JSON [r={}]: {}", MDC.get("r"), message);
+    return new ErrorDto(message);
   }
 
 
@@ -105,6 +106,16 @@ public class ApplicationExceptionHandler {
     LOG.warn("404 Page not found [r={}]: {}: {}", MDC.get("r"), e.getClass().getSimpleName(), e.getMessage());
 
     return new ErrorDto("The requested page or resource does not exist.");
+  }
+
+
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+  @ResponseBody
+  public ErrorDto handleMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
+    String message = "Method %s is not supported for this resource.".formatted(e.getMethod());
+    LOG.warn("405 Method not allowed [r={}]: {}", MDC.get("r"), message);
+    return new ErrorDto(message);
   }
 
 
@@ -153,6 +164,17 @@ public class ApplicationExceptionHandler {
     LOG.error("500 Database access failed [r={}]: {}", MDC.get("r"), e.getMessage(), e);
 
     return new ErrorDto("A server error occurred while accessing the database.");
+  }
+
+
+  @ExceptionHandler
+  @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+  @ResponseBody
+  public ErrorDto handleIOException(IOException e) {
+
+    LOG.warn("500 IO error [r={}]: {}: {}", MDC.get("r"), e.getClass().getSimpleName(), e.getMessage());
+
+    return new ErrorDto("An error occurred while processing the request: " + e.getMessage());
   }
 
 

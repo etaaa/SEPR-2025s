@@ -21,4 +21,14 @@ public record HorseSearchDto(
     Long excludeId,
     Integer limit
 ) {
+
+  public boolean isEmpty() {
+    return name == null
+        && description == null
+        && dateOfBirth == null
+        && sex == null
+        && ownerName == null
+        && excludeId == null
+        && limit == null;
+  }
 }

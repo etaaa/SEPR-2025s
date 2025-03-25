@@ -161,30 +161,28 @@ public class HorseServiceImpl implements HorseService {
   private HorseFamilyTreeDto buildFamilyTree(Horse horse, int depth)
       throws NotFoundException {
 
-    if (horse == null) {
+    if (depth == 0 || horse == null) {
       return null;
     }
 
     HorseFamilyTreeDto mother = null;
     HorseFamilyTreeDto father = null;
 
-    if (depth > 0) {
-      if (horse.motherId() != null) {
-        try {
-          Horse motherHorse = dao.getById(horse.motherId());
-          mother = buildFamilyTree(motherHorse, depth - 1);
-        } catch (NotFoundException e) {
-          throw new FatalException("Mother with ID " + horse.motherId() + " not found, but was referenced by horse " + horse.id(), e);
-        }
+    if (horse.motherId() != null) {
+      try {
+        Horse motherHorse = dao.getById(horse.motherId());
+        mother = buildFamilyTree(motherHorse, depth - 1);
+      } catch (NotFoundException e) {
+        throw new FatalException("Mother with ID " + horse.motherId() + " not found, but was referenced by horse " + horse.id(), e);
       }
+    }
 
-      if (horse.fatherId() != null) {
-        try {
-          Horse fatherHorse = dao.getById(horse.fatherId());
-          father = buildFamilyTree(fatherHorse, depth - 1);
-        } catch (NotFoundException e) {
-          throw new FatalException("Father with ID " + horse.fatherId() + " not found, but was referenced by horse " + horse.id(), e);
-        }
+    if (horse.fatherId() != null) {
+      try {
+        Horse fatherHorse = dao.getById(horse.fatherId());
+        father = buildFamilyTree(fatherHorse, depth - 1);
+      } catch (NotFoundException e) {
+        throw new FatalException("Father with ID " + horse.fatherId() + " not found, but was referenced by horse " + horse.id(), e);
       }
     }
 

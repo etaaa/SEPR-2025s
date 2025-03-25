@@ -37,24 +37,21 @@ public class OwnerEndpoint {
     this.service = service;
   }
 
-
-  @GetMapping
-  public Stream<OwnerDto> getAll() {
-
-    LOG.info("GET " + BASE_PATH);
-
-    return service.getAll();
-  }
-
   /**
    * Searches for owners based on the given search parameters.
    *
    * @param searchParameters the parameters to filter the owner search
    * @return a stream of {@link OwnerDto} matching the search criteria
    */
-  @GetMapping("/search")
+  @GetMapping
   public Stream<OwnerDto> search(OwnerSearchDto searchParameters)
       throws ValidationException {
+
+    if (searchParameters.isEmpty()) {
+      LOG.info("GET " + BASE_PATH);
+
+      return service.getAll();
+    }
 
     LOG.info("GET " + BASE_PATH + " query parameters: {}", searchParameters);
 

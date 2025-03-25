@@ -91,8 +91,8 @@ public class HorseValidator {
 
     List<String> validationErrors = new ArrayList<>();
 
-    if (generations < 0) {
-      validationErrors.add("Generations must be a non-negative integer");
+    if (generations < 1) {
+      validationErrors.add("Generations must be at minimum 1");
     }
     if (generations > 25) {
       validationErrors.add("Generations must not exceed 25");
@@ -180,7 +180,7 @@ public class HorseValidator {
           conflictErrors.add("Father has to be older than her child");
         }
       } catch (NotFoundException e) {
-        validationErrors.add("Father with ID " + horse.motherId() + " does not exist");
+        validationErrors.add("Father with ID " + horse.fatherId() + " does not exist");
       }
     }
 
@@ -292,7 +292,7 @@ public class HorseValidator {
           conflictErrors.add("Father has to be older than her child");
         }
       } catch (NotFoundException e) {
-        validationErrors.add("Father with ID " + horse.motherId() + " does not exist");
+        validationErrors.add("Father with ID " + horse.fatherId() + " does not exist");
       }
     }
 

@@ -125,6 +125,10 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
       this.notification.error('Maximum generations allowed is 25', 'Invalid Input');
       return;
     }
+    if (this.generations < 1) {
+      this.notification.error('Minimum generations allowed is 1', 'Invalid Input');
+      return;
+    }
 
     if (this.horse && this.horse.id) {
       this.router.navigate([], {
@@ -153,6 +157,10 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
       input.value = '25';
       this.generations = 25;
       this.notification.error('Maximum generations allowed is 25', 'Invalid Input');
+    } else if (value < 1) {
+      input.value = '1';
+      this.generations = 1;
+      this.notification.error('Minimum generations allowed is 1', 'Invalid Input');
     }
   }
 

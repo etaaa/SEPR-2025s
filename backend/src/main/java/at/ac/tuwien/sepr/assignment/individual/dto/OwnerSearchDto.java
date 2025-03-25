@@ -14,4 +14,10 @@ public record OwnerSearchDto(
     Collection<Long> ids,
     Integer limit // needs to be present always
 ) {
+
+  public boolean isEmpty() {
+    return name == null
+        && ids == null
+        && limit == null;
+  }
 }

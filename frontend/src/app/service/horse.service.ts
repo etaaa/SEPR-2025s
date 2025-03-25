@@ -45,7 +45,6 @@ export class HorseService {
   } = {}): Observable<Horse[]> {
     let params = new HttpParams();
 
-    let url = baseUri
     const hasFilters = Object.values(filters).some(val => val !== undefined && val !== null && val !== '');
 
     if (hasFilters) {
@@ -56,10 +55,9 @@ export class HorseService {
       if (filters.owner) params = params.set('ownerName', filters.owner);
       params = params.set('limit', (filters.limit !== undefined ? filters.limit : 100).toString());
       if (filters.excludeId !== undefined) params = params.set('excludeId', filters.excludeId.toString());
-      url += "/search";
     }
 
-    return this.http.get<Horse[]>(url, {params})
+    return this.http.get<Horse[]>(baseUri, {params})
       .pipe(
         map(horses => horses.map(this.fixHorseDate))
       );

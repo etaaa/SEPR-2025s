@@ -27,7 +27,7 @@ export class OwnerService {
 
   public searchByName(name: string): Observable<Owner[]> {
     return this.http.get<Owner[]>(
-      `${baseUri}/search`, {
+      baseUri, {
         params: {name: name, limit: 5}
       }
     );

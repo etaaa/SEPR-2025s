@@ -90,27 +90,23 @@ public class HorseEndpoint {
     return new ResponseEntity<>(horseImageDto.image(), headers, HttpStatus.OK);
   }
 
-
-  @GetMapping
-  public Stream<HorseListDto> getAll() {
-
-    LOG.info("GET " + BASE_PATH);
-
-    return service.getAll();
-  }
-
   /**
    * Searches for horses based on the given search parameters.
    *
    * @param searchParameters the parameters to filter the horse search
    * @return a stream of {@link HorseListDto} matching the search criteria
    */
-  @GetMapping("/search")
+  @GetMapping
   public Stream<HorseListDto> search(HorseSearchDto searchParameters)
       throws ValidationException {
 
-    LOG.info("GET " + BASE_PATH);
-    LOG.debug("request parameters: {}", searchParameters);
+    if (searchParameters.isEmpty()) {
+      LOG.info("GET " + BASE_PATH);
+
+      return service.getAll();
+    }
+
+    LOG.info("GET " + BASE_PATH + " query parameters: {}", searchParameters);
 
     return service.search(searchParameters);
   }
