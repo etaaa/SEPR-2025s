@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 /**
@@ -23,22 +24,23 @@ public class HorseMapper {
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   /**
-   * Converts a {@link Horse} entity into a {@link HorseListDto}.
-   * The given map of owners must contain the owner referenced by the horse.
+   * Converts a {@link Horse} entity into a {@link HorseListDto} for summarized representation.
    *
    * @param horse  the horse entity to convert
-   * @param owners a map of horse owners by their ID
-   * @return the converted {@link HorseListDto}
+   * @param owners a map of owner IDs to {@link HorseDetailOwnerDto} objects, must contain the horse’s owner if referenced
+   * @return a {@link HorseListDto} with the horse’s summary details, or null if the input horse is null
+   * @throws FatalException if the owners map does not contain the horse’s owner ID when one is referenced
    */
   public HorseListDto entityToListDto(Horse horse, Map<Long, HorseDetailOwnerDto> owners) {
 
-    LOG.trace("entityToDto({})", horse);
+    LOG.trace("Entering entityToListDto [requestId={}]: Converting horse entity {}", MDC.get("r"), horse);
 
     if (horse == null) {
+      LOG.debug("Horse entity is null, returning null [requestId={}]", MDC.get("r"));
       return null;
     }
 
-    return new HorseListDto(
+    HorseListDto result = new HorseListDto(
         horse.id(),
         horse.name(),
         horse.description(),
@@ -46,29 +48,33 @@ public class HorseMapper {
         horse.sex(),
         getOwner(horse, owners)
     );
+
+    LOG.debug("Converted horse id {} to HorseListDto [requestId={}]: {}", horse.id(), MDC.get("r"), result);
+
+    return result;
   }
 
   /**
-   * Converts a {@link Horse} entity into a {@link HorseDetailDto}.
-   * The given maps must contain the owners and parents referenced by the horse.
+   * Converts a {@link Horse} entity into a {@link HorseDetailDto} with detailed information.
    *
    * @param horse  the horse entity to convert
-   * @param owners a map of horse owners by their ID
-   * @return the converted {@link HorseDetailDto}
+   * @param owners a map of owner IDs to {@link HorseDetailOwnerDto} objects, must contain the horse’s owner if referenced
+   * @param mother the {@link HorseParentDto} representing the horse’s mother, or null if none
+   * @param father the {@link HorseParentDto} representing the horse’s father, or null if none
+   * @return a {@link HorseDetailDto} with detailed horse data, or null if the input horse is null
+   * @throws FatalException if the owners map does not contain the horse’s owner ID when one is referenced
    */
-  public HorseDetailDto entityToDetailDto(
-      Horse horse,
-      Map<Long, HorseDetailOwnerDto> owners,
-      HorseParentDto mother,
-      HorseParentDto father) {
+  public HorseDetailDto entityToDetailDto(Horse horse, Map<Long, HorseDetailOwnerDto> owners, HorseParentDto mother, HorseParentDto father) {
 
-    LOG.trace("entityToDto({})", horse);
+    LOG.trace("Entering entityToDetailDto [requestId={}]: Converting horse entity {}", MDC.get("r"), horse);
 
     if (horse == null) {
+      LOG.debug("Horse entity is null, returning null [requestId={}]", MDC.get("r"));
+
       return null;
     }
 
-    return new HorseDetailDto(
+    HorseDetailDto result = new HorseDetailDto(
         horse.id(),
         horse.name(),
         horse.description(),
@@ -79,19 +85,39 @@ public class HorseMapper {
         father,
         horse.imageUrl()
     );
+
+    LOG.debug("Converted horse id {} to HorseDetailDto [requestId={}]: {}", horse.id(), MDC.get("r"), result);
+
+    return result;
   }
 
+  /**
+   * Retrieves the owner DTO for a horse from the provided owners map.
+   *
+   * @param horse  the horse entity whose owner is to be retrieved
+   * @param owners a map of owner IDs to {@link HorseDetailOwnerDto} objects, must contain the horse’s owner if referenced
+   * @return the {@link HorseDetailOwnerDto} for the horse’s owner, or null if no owner is referenced
+   * @throws FatalException if the owners map does not contain the horse’s owner ID when one is referenced
+   */
   private HorseDetailOwnerDto getOwner(Horse horse, Map<Long, HorseDetailOwnerDto> owners) {
 
-    HorseDetailOwnerDto owner = null;
+    LOG.trace("Retrieving owner for horse id {} [requestId={}]: ownerId {}",
+        horse.id(), MDC.get("r"), horse.ownerId());
 
+    HorseDetailOwnerDto owner = null;
     var ownerId = horse.ownerId();
     if (ownerId != null) {
       if (!owners.containsKey(ownerId)) {
+        LOG.error("Unexpected error [requestId={}]: Owner map missing owner ID {} for horse id {}",
+            MDC.get("r"), ownerId, horse.id());
+
         throw new FatalException("Given owner map does not contain owner of this Horse (%d)".formatted(horse.id()));
       }
       owner = owners.get(ownerId);
+
+      LOG.debug("Retrieved owner for horse id {} [requestId={}]: ownerId {}", horse.id(), MDC.get("r"), ownerId);
     }
+
     return owner;
   }
 }

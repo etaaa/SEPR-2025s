@@ -1,7 +1,6 @@
 package at.ac.tuwien.sepr.assignment.individual.service.impl;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerCreateDto;
-import at.ac.tuwien.sepr.assignment.individual.dto.OwnerDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.OwnerSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.exception.ValidationException;
 
@@ -11,6 +10,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
 
@@ -20,10 +20,11 @@ public class OwnerValidator {
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   /**
-   * Validates search parameters for owners.
+   * Validates search parameters for querying owners.
+   * Ensures structural constraints are met, such as maximum string lengths and valid limits.
    *
-   * @param searchParams the {@link OwnerSearchDto} containing the search parameters to validate
-   * @throws ValidationException if the search parameters are invalid
+   * @param searchParams the search parameters to validate
+   * @throws ValidationException if validation fails (e.g., name exceeds 255 characters, limit is null or negative)
    */
   public void validateForSearch(OwnerSearchDto searchParams) throws ValidationException {
 
@@ -32,7 +33,7 @@ public class OwnerValidator {
     exists. It's totally valid for the search result to contain fewer entries then requested (if
     a few owner don't exist).
      */
-    LOG.trace("validateForSearch({})", searchParams);
+    LOG.trace("Entering validateForSearch [requestId={}]: Validating search parameters {}", MDC.get("r"), searchParams);
 
     List<String> validationErrors = new ArrayList<>();
 
@@ -47,32 +48,23 @@ public class OwnerValidator {
     }
 
     if (!validationErrors.isEmpty()) {
+      LOG.warn("Validation of owner search parameters failed [requestId={}]: {}", MDC.get("r"), validationErrors);
       throw new ValidationException("Validation of owner search parameters failed", validationErrors);
     }
+
+    LOG.debug("Successfully validated search parameters [requestId={}]: {}", MDC.get("r"), searchParams);
   }
 
   /**
-   * Validates owner data before a create operation.
-   * Ensures required fields like firstName and lastName are present and valid,
-   * and checks optional fields like description if provided.
+   * Validates owner data before creation.
+   * Ensures required fields (first name, last name) are present and valid, and checks optional fields (description) if provided.
    *
-   * @param owner the {@link OwnerDto} containing the owner data to validate
-   * @throws ValidationException if the data is invalid (e.g., missing required fields, fields too long)
+   * @param owner the data transfer object containing owner details to validate
+   * @throws ValidationException if validation fails (e.g., missing first name, description too long)
    */
   public void validateForCreate(OwnerCreateDto owner) throws ValidationException {
 
-    /*
-    Note: We could enforce uniqueness of owner names here (e.g. prevent multiple owners
-    with the same first and last name), but this is intentionally not done.
-
-    In the real world it's perfectly valid for different people to share the same name.
-    If disambiguation is required, this should be done using a separate unique field, e.g.
-    such as the owner's email address.
-
-    Name uniqueness is not part of the current exercise specification, and enforcing it here
-    would be both unnecessary in my opinion.
-     */
-    LOG.trace("validateForCreate({})", owner);
+    LOG.trace("Entering validateForCreate [requestId={}]: Validating owner creation with data {}", MDC.get("r"), owner);
 
     List<String> validationErrors = new ArrayList<>();
 
@@ -100,7 +92,10 @@ public class OwnerValidator {
     }
 
     if (!validationErrors.isEmpty()) {
+      LOG.warn("Validation of owner for create failed [requestId={}]: {}", MDC.get("r"), validationErrors);
       throw new ValidationException("Validation of owner for create failed", validationErrors);
     }
+
+    LOG.debug("Successfully validated owner for creation [requestId={}]: {}", MDC.get("r"), owner);
   }
 }

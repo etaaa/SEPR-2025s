@@ -121,8 +121,8 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
   }
 
   updateGenerations(): void {
-    if (this.generations > 25) {
-      this.notification.error('Maximum generations allowed is 25', 'Invalid Input');
+    if (this.generations > 10) {
+      this.notification.error('Maximum generations allowed is 10', 'Invalid Input');
       return;
     }
     if (this.generations < 1) {
@@ -153,10 +153,10 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
   validateGenerations(event: Event): void {
     const input = event.target as HTMLInputElement;
     const value = parseInt(input.value, 10);
-    if (value > 25) {
-      input.value = '25';
-      this.generations = 25;
-      this.notification.error('Maximum generations allowed is 25', 'Invalid Input');
+    if (value > 10) {
+      input.value = '10';
+      this.generations = 10;
+      this.notification.error('Maximum generations allowed is 10', 'Invalid Input');
     } else if (value < 1) {
       input.value = '1';
       this.generations = 1;

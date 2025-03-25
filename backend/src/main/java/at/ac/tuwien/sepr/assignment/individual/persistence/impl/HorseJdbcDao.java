@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -37,6 +38,7 @@ public class HorseJdbcDao implements HorseDao {
 
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String TABLE_NAME = "horse";
+  private final JdbcClient jdbcClient;
 
   private static final String SQL_SELECT_IMAGE_BY_ID =
       "SELECT image, mime_type FROM " + TABLE_NAME
@@ -81,20 +83,18 @@ public class HorseJdbcDao implements HorseDao {
       "DELETE FROM " + TABLE_NAME
           + " WHERE id = :id";
 
-
-  private final JdbcClient jdbcClient;
-
   @Autowired
   public HorseJdbcDao(JdbcClient jdbcClient) {
     this.jdbcClient = jdbcClient;
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
-  public Horse getById(long id)
-      throws NotFoundException {
+  public Horse getById(long id) throws NotFoundException {
 
-    LOG.trace("getById({})", id);
+    LOG.trace("Entering getById [requestId={}]: Retrieving horse with id {}", MDC.get("r"), id);
 
     try {
       List<Horse> horses = jdbcClient
@@ -104,25 +104,34 @@ public class HorseJdbcDao implements HorseDao {
           .list();
 
       if (horses.isEmpty()) {
+        LOG.warn("Horse with ID {} not found [requestId={}]", id, MDC.get("r"));
+
         throw new NotFoundException("No horse with ID %d found".formatted(id));
       }
       if (horses.size() > 1) {
+        LOG.error("Multiple horses with ID {} found [requestId={}]", id, MDC.get("r"));
+
         throw new FatalException("Too many horses with ID %d found".formatted(id));
       }
+
+      LOG.debug("Retrieved horse with ID {} [requestId={}]: {}", id, MDC.get("r"), horses.getFirst());
 
       return horses.getFirst();
 
     } catch (DataAccessException e) {
+      LOG.error("Database access failed for getById with ID {} [requestId={}]: {}", id, MDC.get("r"), e.getMessage(), e);
+
       throw new PersistenceException("Error accessing database", e);
     }
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
-  public HorseImageDto getImageById(long id)
-      throws NotFoundException {
+  public HorseImageDto getImageById(long id) throws NotFoundException {
 
-    LOG.trace("getImageById({})", id);
+    LOG.trace("Entering getImageById [requestId={}]: Retrieving image for horse with id {}", MDC.get("r"), id);
 
     try {
       List<HorseImageDto> images = jdbcClient
@@ -132,23 +141,32 @@ public class HorseJdbcDao implements HorseDao {
           .list();
 
       if (images.isEmpty() || images.get(0) == null) {
-        throw new NotFoundException("No image for horse with ID %d found.".formatted(id));
+        LOG.warn("No image found for horse with ID {} [requestId={}]", id, MDC.get("r"));
+
+        throw new NotFoundException("No image for horse with ID %d found".formatted(id));
       }
       if (images.size() > 1) {
+        LOG.error("Multiple images found for horse with ID {} [requestId={}]", id, MDC.get("r"));
+
         throw new FatalException("Too many horses with ID %d found".formatted(id));
       }
+
+      LOG.debug("Retrieved image for horse ID {} [requestId={}]: MIME type {}", id, MDC.get("r"), images.get(0).mimeType());
 
       return images.get(0);
 
     } catch (DataAccessException e) {
+      LOG.error("Database access failed for getImageById with ID {} [requestId={}]: {}", id, MDC.get("r"), e.getMessage(), e);
+
       throw new PersistenceException("Error accessing database", e);
     }
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
-  public HorseParentDto getParentById(long id)
-      throws NotFoundException {
+  public HorseParentDto getParentById(long id) throws NotFoundException {
 
     /*
     As mentioned in the “Architekturdesign.pdf” slides on page 17, returning a
@@ -157,7 +175,7 @@ public class HorseJdbcDao implements HorseDao {
     data more precisely. If we were to return an entity instead, many fields
     would be null, which is not ideal.
      */
-    LOG.trace("getParentById({})", id);
+    LOG.trace("Entering getParentById [requestId={}]: Retrieving parent with id {}", MDC.get("r"), id);
 
     try {
       List<HorseParentDto> horses = jdbcClient
@@ -167,59 +185,85 @@ public class HorseJdbcDao implements HorseDao {
           .list();
 
       if (horses.isEmpty()) {
+        LOG.warn("Parent with ID {} not found [requestId={}]", id, MDC.get("r"));
+
         throw new NotFoundException("No horse with ID %d found".formatted(id));
       }
       if (horses.size() > 1) {
+        LOG.error("Multiple parents with ID {} found [requestId={}]", id, MDC.get("r"));
+
         throw new FatalException("Too many horses with ID %d found".formatted(id));
       }
+
+      LOG.debug("Retrieved parent with ID {} [requestId={}]: {}", id, MDC.get("r"), horses.getFirst());
 
       return horses.getFirst();
 
     } catch (DataAccessException e) {
+      LOG.error("Database access failed for getParentById with ID {} [requestId={}]: {}", id, MDC.get("r"), e.getMessage(), e);
+
       throw new PersistenceException("Error accessing database", e);
     }
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public List<Horse> getChildrenByParentId(long id) {
 
-    LOG.trace("getChildrenById({})", id);
+    LOG.trace("Entering getChildrenByParentId [requestId={}]: Retrieving children for parent id {}", MDC.get("r"), id);
 
     try {
-      return jdbcClient
+      List<Horse> children = jdbcClient
           .sql(SQL_SELECT_CHILDREN_BY_ID)
           .param("id", id)
           .query(this::mapChildRow)
           .list();
 
+      LOG.debug("Retrieved {} children for parent ID {} [requestId={}]", children.size(), id, MDC.get("r"));
+
+      return children;
+
     } catch (DataAccessException e) {
+      LOG.error("Database access failed for getChildrenByParentId with ID {} [requestId={}]: {}", id, MDC.get("r"), e.getMessage(), e);
+
       throw new PersistenceException("Error accessing database", e);
     }
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public List<Horse> getAll() {
 
-    LOG.trace("getAll()");
+    LOG.trace("Entering getAll [requestId={}]: Retrieving all horses", MDC.get("r"));
 
     try {
-      return jdbcClient
+      List<Horse> horses = jdbcClient
           .sql(SQL_SELECT_ALL)
           .query(this::mapRow)
           .list();
 
+      LOG.debug("Retrieved {} horses [requestId={}]", horses.size(), MDC.get("r"));
+
+      return horses;
+
     } catch (DataAccessException e) {
+      LOG.error("Database access failed for getAll [requestId={}]: {}", MDC.get("r"), e.getMessage(), e);
+
       throw new PersistenceException("Error accessing database", e);
     }
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public List<Horse> search(HorseSearchDto searchParameters) {
 
-    LOG.trace("search({})", searchParameters);
+    LOG.trace("Entering search [requestId={}]: Searching horses with parameters {}", MDC.get("r"), searchParameters);
 
     Map<String, Object> params = new HashMap<>();
     List<String> conditions = new ArrayList<>();
@@ -240,7 +284,6 @@ public class HorseJdbcDao implements HorseDao {
       params.put("sex", searchParameters.sex().toString());
       conditions.add("sex = :sex");
     }
-
     if (searchParameters.excludeId() != null) {
       params.put("excludeId", searchParameters.excludeId());
       conditions.add("id <> :excludeId");
@@ -250,28 +293,36 @@ public class HorseJdbcDao implements HorseDao {
     if (!conditions.isEmpty()) {
       query += " WHERE " + String.join(" AND ", conditions);
     }
-
     if (searchParameters.limit() != null) {
       params.put("limit", searchParameters.limit());
       query += " LIMIT :limit";
     }
 
     try {
-      return jdbcClient
+      List<Horse> horses = jdbcClient
           .sql(query)
           .params(params)
           .query(this::mapRow)
           .list();
 
+      LOG.debug("Found {} horses matching search parameters [requestId={}]", horses.size(), MDC.get("r"));
+
+      return horses;
+
     } catch (DataAccessException e) {
+      LOG.error("Database access failed for search with parameters {} [requestId={}]: {}", searchParameters, MDC.get("r"), e.getMessage(), e);
+
       throw new PersistenceException("Error accessing database", e);
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Horse create(HorseCreateDto horse, HorseImageDto horseImage) {
 
-    LOG.trace("create({})", horse);
+    LOG.trace("Entering create [requestId={}]: Creating horse with data {}", MDC.get("r"), horse);
 
     KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -287,35 +338,38 @@ public class HorseJdbcDao implements HorseDao {
           .param("image", horseImage == null ? null : horseImage.image())
           .param("mime_type", horseImage == null ? null : horseImage.mimeType())
           .update(keyHolder);
+
       if (rowsAffected == 0 || keyHolder.getKey() == null) {
+        LOG.error("Failed to insert horse into database [requestId={}]: No rows affected or key not generated", MDC.get("r"));
+
         throw new PersistenceException("Failed to insert horse into database");
       }
 
       Long id = keyHolder.getKey().longValue();
-
-      return new Horse(
-          id,
-          horse.name(),
-          horse.description(),
-          horse.dateOfBirth(),
-          horse.sex(),
-          horse.ownerId(),
-          horse.motherId(),
-          horse.fatherId(),
+      Horse createdHorse = new Horse(
+          id, horse.name(), horse.description(), horse.dateOfBirth(), horse.sex(),
+          horse.ownerId(), horse.motherId(), horse.fatherId(),
           horseImage == null ? null : "/horses/" + id + "/image"
       );
 
+      LOG.info("Successfully created horse with ID {} [requestId={}]", id, MDC.get("r"));
+
+      return createdHorse;
+
     } catch (DataAccessException e) {
+      LOG.error("Database access failed for create with data {} [requestId={}]: {}", horse, MDC.get("r"), e.getMessage(), e);
+
       throw new PersistenceException("Error accessing database", e);
     }
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
-  public Horse update(HorseUpdateDto horse, HorseImageDto horseImage)
-      throws NotFoundException {
+  public Horse update(HorseUpdateDto horse, HorseImageDto horseImage) throws NotFoundException {
 
-    LOG.trace("update({})", horse);
+    LOG.trace("Entering update [requestId={}]: Updating horse with id {} and data {}", MDC.get("r"), horse.id(), horse);
 
     if (horseImage == null && !horse.deleteImage()) {
       horseImage = getImageById(horse.id());
@@ -337,34 +391,35 @@ public class HorseJdbcDao implements HorseDao {
           .update();
 
       if (updated == 0) {
-        throw new NotFoundException(
-            "No horse with ID " + horse.id() + " found to update"
-        );
+        LOG.warn("No horse with ID {} found to update [requestId={}]", horse.id(), MDC.get("r"));
+
+        throw new NotFoundException("No horse with ID " + horse.id() + " found to update");
       }
 
-      return new Horse(
-          horse.id(),
-          horse.name(),
-          horse.description(),
-          horse.dateOfBirth(),
-          horse.sex(),
-          horse.ownerId(),
-          horse.motherId(),
-          horse.fatherId(),
+      Horse updatedHorse = new Horse(
+          horse.id(), horse.name(), horse.description(), horse.dateOfBirth(), horse.sex(),
+          horse.ownerId(), horse.motherId(), horse.fatherId(),
           horseImage == null ? null : "/horses/" + horse.id() + "/image"
       );
 
+      LOG.info("Successfully updated horse with ID {} [requestId={}]", horse.id(), MDC.get("r"));
+
+      return updatedHorse;
+
     } catch (DataAccessException e) {
+      LOG.error("Database access failed for update with ID {} [requestId={}]: {}", horse.id(), MDC.get("r"), e.getMessage(), e);
+
       throw new PersistenceException("Error accessing database", e);
     }
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
-  public void delete(long id)
-      throws NotFoundException {
+  public void delete(long id) throws NotFoundException {
 
-    LOG.trace("delete({})", id);
+    LOG.trace("Entering delete [requestId={}]: Deleting horse with id {}", MDC.get("r"), id);
 
     try {
       int rowsAffected = jdbcClient
@@ -373,17 +428,29 @@ public class HorseJdbcDao implements HorseDao {
           .update();
 
       if (rowsAffected == 0) {
+        LOG.warn("No horse with ID {} found for deletion [requestId={}]", id, MDC.get("r"));
+
         throw new NotFoundException("No horse with ID " + id + " found for deletion");
       }
 
+      LOG.info("Successfully deleted horse with ID {} [requestId={}]", id, MDC.get("r"));
+
     } catch (DataAccessException e) {
+      LOG.error("Database access failed for delete with ID {} [requestId={}]: {}", id, MDC.get("r"), e.getMessage(), e);
+
       throw new PersistenceException("Error accessing database", e);
     }
   }
 
-
-  private Horse mapRow(ResultSet result, int rownum)
-      throws SQLException {
+  /**
+   * Maps a database result set row to a {@link Horse} entity.
+   *
+   * @param result the result set containing horse data
+   * @param rowNum the current row number
+   * @return the mapped {@link Horse} entity
+   * @throws SQLException if an error occurs while accessing the result set
+   */
+  private Horse mapRow(ResultSet result, int rowNum) throws SQLException {
 
     long id = result.getLong("id");
     boolean hasImage = result.getInt("has_image") == 1;
@@ -402,7 +469,15 @@ public class HorseJdbcDao implements HorseDao {
     );
   }
 
-  private HorseParentDto mapParentRow(ResultSet result, int rownum) throws SQLException {
+  /**
+   * Maps a database result set row to a {@link HorseParentDto} object.
+   *
+   * @param result the result set containing parent horse data
+   * @param rowNum the current row number
+   * @return the mapped {@link HorseParentDto} object
+   * @throws SQLException if an error occurs while accessing the result set
+   */
+  private HorseParentDto mapParentRow(ResultSet result, int rowNum) throws SQLException {
 
     return new HorseParentDto(
         result.getLong("id"),
@@ -410,7 +485,16 @@ public class HorseJdbcDao implements HorseDao {
     );
   }
 
-  private Horse mapChildRow(ResultSet result, int rownum) throws SQLException {
+  /**
+   * Maps a database result set row to a minimal {@link Horse} entity for child horses.
+   *
+   * @param result the result set containing child horse data
+   * @param rowNum the current row number
+   * @return the mapped {@link Horse} entity with limited fields
+   * @throws SQLException if an error occurs while accessing the result set
+   */
+  private Horse mapChildRow(ResultSet result, int rowNum) throws SQLException {
+
     return new Horse(
         result.getLong("id"),
         null,

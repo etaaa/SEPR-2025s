@@ -15,10 +15,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import at.ac.tuwien.sepr.assignment.individual.persistence.HorseDao;
-import at.ac.tuwien.sepr.assignment.individual.persistence.OwnerDao;
+import at.ac.tuwien.sepr.assignment.individual.service.OwnerService;
 import at.ac.tuwien.sepr.assignment.individual.type.Sex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -29,24 +30,22 @@ import org.springframework.stereotype.Component;
 public class HorseValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
-  /*
-  Note: We use services here instead of DAOs, as directly accessing the DAOs
-  would violate the layered architecture. Another advantage is that when
-  verifying an ID, for example, we can add extra checks to the getByID()
-  method in the service layer—checks that wouldn't be applied if we called
-  the method directly in the persistence layer.
-   */
   private final HorseDao horseDao;
-  private final OwnerDao ownerDao;
+  private final OwnerService ownerService;
 
   @Autowired
-  public HorseValidator(HorseDao horseDao, OwnerDao ownerDao) {
+  public HorseValidator(HorseDao horseDao, OwnerService ownerService) {
     this.horseDao = horseDao;
-    this.ownerDao = ownerDao;
+    this.ownerService = ownerService;
   }
 
-
+  /**
+   * Validates search parameters for querying horses.
+   * Ensures that search parameters adhere to structural constraints, such as maximum string lengths and valid limits.
+   *
+   * @param searchParams the search parameters to validate
+   * @throws ValidationException if any validation rule is violated (e.g., name exceeds 255 characters, limit is null or negative)
+   */
   public void validateForSearch(HorseSearchDto searchParams) throws ValidationException {
 
     /*
@@ -54,13 +53,10 @@ public class HorseValidator {
     exists. It's totally valid for the search result to contain fewer entries then requested (if a
     few owners don't exist).
      */
-    LOG.trace("validateForSearch({})", searchParams);
+    LOG.trace("Entering validateForSearch [requestId={}]: Validating search parameters {}", MDC.get("r"), searchParams);
 
     List<String> validationErrors = new ArrayList<>();
 
-    /*
-    Note: This limits only the search input, not the underlying full name, which can be longer.
-     */
     if (searchParams.name() != null && searchParams.name().length() > 255) {
       validationErrors.add("Search name too long: must be 255 characters or fewer");
     }
@@ -80,40 +76,52 @@ public class HorseValidator {
     }
 
     if (!validationErrors.isEmpty()) {
+      LOG.warn("Validation of horse search parameters failed [requestId={}]: {}", MDC.get("r"), validationErrors);
       throw new ValidationException("Validation of horse search parameters failed", validationErrors);
     }
+
+    LOG.debug("Successfully validated search parameters [requestId={}]: {}", MDC.get("r"), searchParams);
   }
 
-
+  /**
+   * Validates the number of generations for pedigree-related queries.
+   * Ensures the number of generations is within acceptable bounds (1 to 10).
+   *
+   * @param generations the number of generations to validate
+   * @throws ValidationException if generations is less than 1 or exceeds 10
+   */
   public void validateGenerations(int generations) throws ValidationException {
 
-    LOG.trace("validateGenerations({})", generations);
+    LOG.trace("Entering validateGenerations [requestId={}]: Validating generations {}", MDC.get("r"), generations);
 
     List<String> validationErrors = new ArrayList<>();
 
     if (generations < 1) {
       validationErrors.add("Generations must be at minimum 1");
     }
-    if (generations > 25) {
-      validationErrors.add("Generations must not exceed 25");
+    if (generations > 10) {
+      validationErrors.add("Generations must not exceed 10");
     }
 
     if (!validationErrors.isEmpty()) {
+      LOG.warn("Validation of generations parameter failed [requestId={}]: {}", MDC.get("r"), validationErrors);
       throw new ValidationException("Validation of generations parameter failed", validationErrors);
     }
+
+    LOG.debug("Successfully validated generations [requestId={}]: {}", MDC.get("r"), generations);
   }
 
   /**
-   * Validates horse data before a create operation.
-   * Ensures required fields are present and valid, such as name, date of birth, and sex.
+   * Validates horse data before creation.
+   * Ensures required fields (e.g., name, date of birth, sex) are present and valid, and checks for conflicts with existing data.
    *
-   * @param horse the {@link HorseCreateDto} containing the horse data to validate
-   * @throws ValidationException if the data is invalid (e.g., missing name, future birth date, missing sex)
-   * @throws ConflictException   if the data conflicts with existing system state
+   * @param horse the data transfer object containing horse details to validate
+   * @throws ValidationException if required fields are missing or invalid (e.g., empty name, future birth date)
+   * @throws ConflictException   if data conflicts with existing records (e.g., mother is not female, parents not older than child)
    */
   public void validateForCreate(HorseCreateDto horse) throws ValidationException, ConflictException {
 
-    LOG.trace("validateForCreate({})", horse);
+    LOG.trace("Entering validateForCreate [requestId={}]: Validating horse creation with data {}", MDC.get("r"), horse);
 
     List<String> validationErrors = new ArrayList<>();
 
@@ -148,7 +156,7 @@ public class HorseValidator {
 
     if (horse.ownerId() != null) {
       try {
-        ownerDao.getById(horse.ownerId());
+        ownerService.getById(horse.ownerId());
       } catch (NotFoundException e) {
         validationErrors.add("Owner with ID " + horse.ownerId() + " does not exist");
       }
@@ -185,23 +193,28 @@ public class HorseValidator {
     }
 
     if (!validationErrors.isEmpty()) {
+      LOG.warn("Validation of horse for create failed [requestId={}]: {}", MDC.get("r"), validationErrors);
       throw new ValidationException("Validation of horse for create failed", validationErrors);
     }
     if (!conflictErrors.isEmpty()) {
+      LOG.warn("Conflict detected during horse creation [requestId={}]: {}", MDC.get("r"), conflictErrors);
       throw new ConflictException("Conflict with existing data", conflictErrors);
     }
+
+    LOG.debug("Successfully validated horse for creation [requestId={}]: {}", MDC.get("r"), horse);
   }
 
   /**
-   * Validates a horse before updating, ensuring all fields meet constraints and checking for conflicts.
+   * Validates horse data before updating an existing horse.
+   * Ensures all fields meet constraints and checks for conflicts with existing data, such as parent-child relationships.
    *
-   * @param horse the {@link HorseUpdateDto} to validate
-   * @throws ValidationException if validation fails
-   * @throws ConflictException   if conflicts with existing data are detected
+   * @param horse the data transfer object containing updated horse details
+   * @throws ValidationException if validation fails (e.g., missing name, future birth date)
+   * @throws ConflictException   if conflicts are detected (e.g., changing sex of a parent, birth date after child's birth)
    */
   public void validateForUpdate(HorseUpdateDto horse) throws ValidationException, ConflictException {
 
-    LOG.trace("validateForUpdate({})", horse);
+    LOG.trace("Entering validateForUpdate [requestId={}]: Validating horse update with data {}", MDC.get("r"), horse);
 
     List<String> validationErrors = new ArrayList<>();
     List<String> conflictErrors = new ArrayList<>();
@@ -225,7 +238,6 @@ public class HorseValidator {
             }
           }
         }
-
       } catch (NotFoundException e) {
         validationErrors.add("Horse with ID " + horse.id() + " does not exist");
       }
@@ -262,7 +274,7 @@ public class HorseValidator {
 
     if (horse.ownerId() != null) {
       try {
-        ownerDao.getById(horse.ownerId());
+        ownerService.getById(horse.ownerId());
       } catch (NotFoundException e) {
         validationErrors.add("Owner with ID " + horse.ownerId() + " does not exist");
       }
@@ -301,10 +313,14 @@ public class HorseValidator {
     }
 
     if (!validationErrors.isEmpty()) {
+      LOG.warn("Validation of horse for update failed [requestId={}]: {}", MDC.get("r"), validationErrors);
       throw new ValidationException("Validation of horse for update failed", validationErrors);
     }
     if (!conflictErrors.isEmpty()) {
+      LOG.warn("Conflict detected during horse update [requestId={}]: {}", MDC.get("r"), conflictErrors);
       throw new ConflictException("Conflict with existing data", conflictErrors);
     }
+
+    LOG.debug("Successfully validated horse for update [requestId={}]: {}", MDC.get("r"), horse);
   }
 }

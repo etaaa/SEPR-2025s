@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,16 +45,15 @@ public class OwnerEndpoint {
    * @return a stream of {@link OwnerDto} matching the search criteria
    */
   @GetMapping
-  public Stream<OwnerDto> search(OwnerSearchDto searchParameters)
-      throws ValidationException {
+  public Stream<OwnerDto> search(OwnerSearchDto searchParameters) throws ValidationException {
 
     if (searchParameters.isEmpty()) {
-      LOG.info("GET " + BASE_PATH);
+      LOG.info("Processing GET {} request [requestId={}]: Retrieving all owners", BASE_PATH, MDC.get("r"));
 
       return service.getAll();
     }
 
-    LOG.info("GET " + BASE_PATH + " query parameters: {}", searchParameters);
+    LOG.info("Processing GET {} request [requestId={}]: Searching owners with parameters {}", BASE_PATH, MDC.get("r"), searchParameters);
 
     return service.search(searchParameters);
   }
@@ -61,12 +61,15 @@ public class OwnerEndpoint {
 
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   @ResponseStatus(HttpStatus.CREATED)
-  public OwnerDto create(@RequestBody OwnerCreateDto toCreate)
-      throws ConflictException, ValidationException {
+  public OwnerDto create(@RequestBody OwnerCreateDto toCreate) throws ConflictException, ValidationException {
 
-    LOG.info("POST " + BASE_PATH + "/{}", toCreate);
-    LOG.debug("Body of request:\n{}", toCreate);
+    LOG.info("Processing POST {} request [requestId={}]: Creating owner with data {}", BASE_PATH, MDC.get("r"), toCreate);
+    LOG.debug("Create request details [requestId={}]: Owner data {}", MDC.get("r"), toCreate);
 
-    return service.create(toCreate);
+    OwnerDto createdOwner = service.create(toCreate);
+
+    LOG.info("Successfully created owner with id {} [requestId={}]", createdOwner.id(), MDC.get("r"));
+
+    return createdOwner;
   }
 }

@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 /**
@@ -32,85 +33,98 @@ public class OwnerServiceImpl implements OwnerService {
   private final OwnerMapper mapper;
   private final OwnerValidator validator;
 
-  public OwnerServiceImpl(
-      OwnerDao dao,
-      OwnerMapper mapper,
-      OwnerValidator validator) {
+  public OwnerServiceImpl(OwnerDao dao, OwnerMapper mapper, OwnerValidator validator) {
     this.dao = dao;
     this.mapper = mapper;
     this.validator = validator;
   }
 
   /**
-   * Retrieves an owner by ID.
-   *
-   * @param id the ID of the owner
-   * @return the {@link OwnerDto} representing the owner
-   * @throws NotFoundException if the owner is not found
+   * {@inheritDoc}
    */
   @Override
   public OwnerDto getById(long id) throws NotFoundException {
-    LOG.trace("getById({})", id);
-    return mapper.entityToDto(dao.getById(id));
-  }
 
+    LOG.trace("Entering getById [requestId={}]: Retrieving owner with id {}", MDC.get("r"), id);
 
-  @Override
-  public Stream<OwnerDto> getAll() {
-    LOG.trace("getAll()");
-    return dao.getAll().stream()
-        .map(mapper::entityToDto);
+    OwnerDto owner = mapper.entityToDto(dao.getById(id));
+
+    LOG.debug("Retrieved owner with id {} [requestId={}]: {}", id, MDC.get("r"), owner);
+
+    return owner;
   }
 
   /**
-   * Retrieves multiple owners by their IDs.
-   *
-   * @param ids the collection of owner IDs to retrieve
-   * @return a map of owner IDs to {@link OwnerDto} objects
-   * @throws NotFoundException if any of the owners are not found
+   * {@inheritDoc}
    */
   @Override
-  public Map<Long, HorseDetailOwnerDto> getAllById(Collection<Long> ids) throws NotFoundException {
-    LOG.trace("getAllById({})", ids);
-    Map<Long, HorseDetailOwnerDto> owners =
-        dao.search(new OwnerSearchDto(null, ids, null)).stream()
-            .map(mapper::entityToDto)
-            .collect(Collectors.toUnmodifiableMap(OwnerDto::id, OwnerDto::toHorseDetailOwnerDto));
-    for (final var id : ids) {
-      if (!owners.containsKey(id)) {
-        throw new NotFoundException("Owner with ID %d not found".formatted(id));
-      }
-    }
+  public Stream<OwnerDto> getAll() {
+
+    LOG.trace("Entering getAll [requestId={}]: Retrieving all owners", MDC.get("r"));
+
+    Stream<OwnerDto> owners = dao.getAll().stream().map(mapper::entityToDto);
+
+    LOG.debug("Retrieved all owners [requestId={}]: Operation completed", MDC.get("r"));
+
     return owners;
   }
 
   /**
-   * Searches for owners based on search parameters.
-   *
-   * @param searchParameters the search criteria
-   * @return a stream of matching {@link OwnerDto} objects
+   * {@inheritDoc}
+   */
+  @Override
+  public Map<Long, HorseDetailOwnerDto> getAllById(Collection<Long> ids) throws NotFoundException {
+
+    LOG.trace("Entering getAllById [requestId={}]: Retrieving owners with ids {}", MDC.get("r"), ids);
+
+    Map<Long, HorseDetailOwnerDto> owners = dao.search(new OwnerSearchDto(null, ids, null)).stream()
+        .map(mapper::entityToDto)
+        .collect(Collectors.toUnmodifiableMap(OwnerDto::id, OwnerDto::toHorseDetailOwnerDto));
+
+    LOG.debug("Retrieved {} owners for ids {} [requestId={}]", owners.size(), ids, MDC.get("r"));
+
+    for (final var id : ids) {
+      if (!owners.containsKey(id)) {
+        LOG.warn("Owner with id {} not found in batch retrieval [requestId={}]", id, MDC.get("r"));
+        throw new NotFoundException("Owner with ID %d not found".formatted(id));
+      }
+    }
+
+    return owners;
+  }
+
+  /**
+   * {@inheritDoc}
    */
   @Override
   public Stream<OwnerDto> search(OwnerSearchDto searchParameters) throws ValidationException {
 
-    LOG.trace("search({})", searchParameters);
+    LOG.trace("Entering search [requestId={}]: Searching owners with parameters {}", MDC.get("r"), searchParameters);
 
     validator.validateForSearch(searchParameters);
 
-    return dao.search(searchParameters).stream()
-        .map(mapper::entityToDto);
+    Stream<OwnerDto> owners = dao.search(searchParameters).stream().map(mapper::entityToDto);
+
+    LOG.debug("Found owners matching search parameters [requestId={}]: Operation completed", MDC.get("r"));
+
+    return owners;
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OwnerDto create(OwnerCreateDto owner) throws ValidationException, ConflictException {
-    LOG.trace("create({})", owner);
+
+    LOG.trace("Entering create [requestId={}]: Creating owner with data {}", MDC.get("r"), owner);
 
     validator.validateForCreate(owner);
 
     var createdOwner = dao.create(owner);
+    OwnerDto result = mapper.entityToDto(createdOwner);
 
-    return mapper.entityToDto(createdOwner);
+    LOG.info("Successfully created owner with id {} [requestId={}]", result.id(), MDC.get("r"));
+
+    return result;
   }
-
 }

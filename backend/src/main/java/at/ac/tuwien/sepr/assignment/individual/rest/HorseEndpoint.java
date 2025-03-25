@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -62,10 +63,9 @@ public class HorseEndpoint {
    * @throws ResponseStatusException if the horse is not found
    */
   @GetMapping("{id}")
-  public HorseDetailDto getById(@PathVariable("id") long id)
-      throws NotFoundException {
+  public HorseDetailDto getById(@PathVariable("id") long id) throws NotFoundException {
 
-    LOG.info("GET " + BASE_PATH + "/{}", id);
+    LOG.info("Processing GET {} request [requestId={}]: Retrieving horse with id {}", BASE_PATH + "/{}", MDC.get("r"), id);
 
     return service.getById(id);
   }
@@ -78,15 +78,17 @@ public class HorseEndpoint {
    * @throws ResponseStatusException with HTTP status 404 if the image or the horse is not found
    */
   @GetMapping("/{id}/image")
-  public ResponseEntity<byte[]> getHorseImage(
-      @PathVariable("id") long id)
-      throws NotFoundException {
+  public ResponseEntity<byte[]> getHorseImage(@PathVariable("id") long id) throws NotFoundException {
 
-    LOG.info("GET image for horse with id {}", id);
+    LOG.info("Processing GET {}/image request [requestId={}]: Retrieving image for horse with id {}", BASE_PATH + "/{}", MDC.get("r"), id);
 
     HorseImageDto horseImageDto = service.getImageById(id);
+
+    LOG.debug("Retrieved image for horse id {} [requestId={}]: MIME type {}", id, MDC.get("r"), horseImageDto.mimeType());
+
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.parseMediaType(horseImageDto.mimeType()));
+
     return new ResponseEntity<>(horseImageDto.image(), headers, HttpStatus.OK);
   }
 
@@ -97,28 +99,26 @@ public class HorseEndpoint {
    * @return a stream of {@link HorseListDto} matching the search criteria
    */
   @GetMapping
-  public Stream<HorseListDto> search(HorseSearchDto searchParameters)
-      throws ValidationException {
+  public Stream<HorseListDto> search(HorseSearchDto searchParameters) throws ValidationException {
 
     if (searchParameters.isEmpty()) {
-      LOG.info("GET " + BASE_PATH);
+      LOG.info("Processing GET {} request [requestId={}]: Retrieving all horses", BASE_PATH, MDC.get("r"));
 
       return service.getAll();
     }
 
-    LOG.info("GET " + BASE_PATH + " query parameters: {}", searchParameters);
+    LOG.info("Processing GET {} request [requestId={}]: Searching horses with parameters {}", BASE_PATH, MDC.get("r"), searchParameters);
 
     return service.search(searchParameters);
   }
 
 
   @GetMapping("/{id}/familytree")
-  public HorseFamilyTreeDto getFamilyTree(
-      @PathVariable("id") long id,
-      @RequestParam(name = "generations", defaultValue = "1") int generations)
+  public HorseFamilyTreeDto getFamilyTree(@PathVariable("id") long id, @RequestParam(name = "generations", defaultValue = "1") int generations)
       throws NotFoundException, ValidationException {
 
-    LOG.info("GET " + BASE_PATH + "/{}/familytree?generations={}", id, generations);
+    LOG.info("Processing GET {}/familytree request [requestId={}]: Retrieving family tree for horse id {} with {} generations", BASE_PATH + "/{}", MDC.get("r"),
+        id, generations);
 
     return service.getFamilyTree(id, generations);
   }
@@ -134,20 +134,24 @@ public class HorseEndpoint {
    */
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @ResponseStatus(HttpStatus.CREATED)
-  public HorseDetailDto create(
-      @ModelAttribute HorseCreateDto toCreate,
-      @RequestParam(value = "image", required = false) MultipartFile image)
+  public HorseDetailDto create(@ModelAttribute HorseCreateDto toCreate, @RequestParam(value = "image", required = false) MultipartFile image)
       throws ValidationException, ConflictException, IOException {
 
-    LOG.info("POST " + BASE_PATH + "/{}", toCreate);
-    LOG.debug("Body of request:\n{}", toCreate);
+    LOG.info("Processing POST {} request [requestId={}]: Creating horse with data {}", BASE_PATH, MDC.get("r"), toCreate);
+    LOG.debug("Create request details [requestId={}]: Horse data {}, Image provided: {}", MDC.get("r"), toCreate, image != null && !image.isEmpty());
 
     HorseImageDto horseImage = null;
     if (image != null && !image.isEmpty()) {
+      LOG.trace("Processing image upload for new horse [requestId={}]: Size {} bytes, MIME type {}", MDC.get("r"), image.getSize(), image.getContentType());
+
       horseImage = new HorseImageDto(image.getBytes(), image.getContentType());
     }
 
-    return service.create(toCreate, horseImage);
+    HorseDetailDto createdHorse = service.create(toCreate, horseImage);
+
+    LOG.info("Successfully created horse with id {} [requestId={}]", createdHorse.id(), MDC.get("r"));
+
+    return createdHorse;
   }
 
   /**
@@ -162,21 +166,25 @@ public class HorseEndpoint {
    *                                 or with HTTP status 409 if there is a conflict with existing data.
    */
   @PutMapping(path = "{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public HorseDetailDto update(
-      @PathVariable("id") long id,
-      @ModelAttribute HorseUpdateRestDto toUpdate,
-      @RequestParam(value = "image", required = false) MultipartFile image)
+  public HorseDetailDto update(@PathVariable("id") long id, @ModelAttribute HorseUpdateRestDto toUpdate,
+                               @RequestParam(value = "image", required = false) MultipartFile image)
       throws NotFoundException, ValidationException, ConflictException, IOException {
 
-    LOG.info("PUT " + BASE_PATH + "/{}", toUpdate);
-    LOG.debug("Body of request:\n{}", toUpdate);
+    LOG.info("Processing PUT {}/{} request [requestId={}]: Updating horse with id {} and data {}",
+        BASE_PATH, id, MDC.get("r"), id, toUpdate);
+    LOG.debug("Update request details [requestId={}]: Horse data {}, Image provided: {}", MDC.get("r"), toUpdate, image != null && !image.isEmpty());
 
     HorseImageDto horseImage = null;
     if (image != null && !image.isEmpty()) {
+      LOG.trace("Processing image upload for horse id {} [requestId={}]: Size {} bytes, MIME type {}",
+          id, MDC.get("r"), image.getSize(), image.getContentType());
+
       horseImage = new HorseImageDto(image.getBytes(), image.getContentType());
     }
 
-    return service.update(toUpdate.toUpdateDtoWithId(id), horseImage);
+    HorseDetailDto updatedHorse = service.update(toUpdate.toUpdateDtoWithId(id), horseImage);
+    LOG.info("Successfully updated horse with id {} [requestId={}]", id, MDC.get("r"));
+    return updatedHorse;
   }
 
   /**
@@ -187,11 +195,12 @@ public class HorseEndpoint {
    */
   @DeleteMapping("{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void delete(@PathVariable("id") long id)
-      throws NotFoundException {
+  public void delete(@PathVariable("id") long id) throws NotFoundException {
 
-    LOG.info("DELETE " + BASE_PATH + "/{}", id);
+    LOG.info("Processing DELETE {}/{} request [requestId={}]: Deleting horse with id {}", BASE_PATH, id, MDC.get("r"), id);
 
     service.delete(id);
+
+    LOG.info("Successfully deleted horse with id {} [requestId={}]", id, MDC.get("r"));
   }
 }

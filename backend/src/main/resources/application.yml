@@ -1,10 +1,18 @@
 logging:
   level:
     root: INFO
+    at.ac.tuwien.sepr.assignment.individual: DEBUG
   file:
     name: ./log/wendys-friends.log
   pattern:
-    level: r=%X{r} ip=%X{ip} %5p
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} r=%X{r} ip=%X{ip} %5p [%t] %c{1} - %m%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} r=%X{r} ip=%X{ip} %5p [%t] %c{1} - %m%n"
+  logback:
+    rollingpolicy:
+      file-name-pattern: ./log/wendys-friends-%d{yyyy-MM-dd}.log
+      max-history: 30
+      max-file-size: 10MB
+      total-size-cap: 1GB
 spring:
   application:
     name: wendys-family-tree
@@ -16,6 +24,11 @@ spring:
   h2:
     console:
       enabled: true
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
 server:
   port: 8080
   error:

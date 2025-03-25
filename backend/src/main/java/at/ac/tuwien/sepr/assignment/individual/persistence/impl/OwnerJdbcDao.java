@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -30,8 +31,10 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public class OwnerJdbcDao implements OwnerDao {
+
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final String TABLE_NAME = "owner";
+  private final JdbcClient jdbcClient;
 
   private static final String SQL_SELECT_BY_ID =
       "SELECT * FROM " + TABLE_NAME
@@ -45,18 +48,18 @@ public class OwnerJdbcDao implements OwnerDao {
           + " (first_name, last_name, description) "
           + "VALUES (:firstName, :lastName, :description)";
 
-  private final JdbcClient jdbcClient;
-
   @Autowired
   public OwnerJdbcDao(JdbcClient jdbcClient) {
     this.jdbcClient = jdbcClient;
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Owner getById(long id) throws NotFoundException {
 
-    LOG.trace("getById({})", id);
+    LOG.trace("Entering getById [requestId={}]: Retrieving owner with id {}", MDC.get("r"), id);
 
     try {
       List<Owner> owners = jdbcClient
@@ -66,40 +69,59 @@ public class OwnerJdbcDao implements OwnerDao {
           .list();
 
       if (owners.isEmpty()) {
+        LOG.warn("Owner with ID {} not found [requestId={}]", id, MDC.get("r"));
+
         throw new NotFoundException("Owner with ID %d not found".formatted(id));
       }
       if (owners.size() > 1) {
+        LOG.error("Unexpected error [requestId={}]: Found multiple owners with ID {}", MDC.get("r"), id);
+
         throw new FatalException("Found more than one owner with ID %d".formatted(id));
       }
+
+      LOG.debug("Retrieved owner with id {} [requestId={}]: {}", id, MDC.get("r"), owners.getFirst());
+
       return owners.getFirst();
 
     } catch (DataAccessException e) {
+      LOG.error("Database access failed [requestId={}]: Error retrieving owner with id {}", MDC.get("r"), id, e);
+
       throw new PersistenceException("Error accessing database", e);
     }
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public List<Owner> getAll() {
 
-    LOG.trace("getAll()");
+    LOG.trace("Entering getAll [requestId={}]: Retrieving all owners", MDC.get("r"));
 
     try {
-      return jdbcClient
+      List<Owner> owners = jdbcClient
           .sql(SQL_SELECT_ALL)
           .query(this::mapRow)
           .list();
 
+      LOG.debug("Retrieved {} owners [requestId={}]", owners.size(), MDC.get("r"));
+
+      return owners;
+
     } catch (DataAccessException e) {
+      LOG.error("Database access failed [requestId={}]: Error retrieving all owners", MDC.get("r"), e);
+
       throw new PersistenceException("Error accessing database", e);
     }
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public List<Owner> search(OwnerSearchDto searchParameters) {
 
-    LOG.trace("search({})", searchParameters);
+    LOG.trace("Entering search [requestId={}]: Searching owners with parameters {}", MDC.get("r"), searchParameters);
 
     Map<String, Object> params = new HashMap<>();
     List<String> conditions = new ArrayList<>();
@@ -125,22 +147,30 @@ public class OwnerJdbcDao implements OwnerDao {
     }
 
     try {
-      return jdbcClient
+      List<Owner> owners = jdbcClient
           .sql(query)
           .params(params)
           .query(this::mapRow)
           .list();
 
+      LOG.debug("Found {} owners matching search parameters [requestId={}]", owners.size(), MDC.get("r"));
+
+      return owners;
+
     } catch (DataAccessException e) {
+      LOG.error("Database access failed [requestId={}]: Error searching owners with parameters {}", MDC.get("r"), searchParameters, e);
+
       throw new PersistenceException("Error accessing database", e);
     }
   }
 
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Owner create(OwnerCreateDto owner) {
 
-    LOG.trace("create({})", owner);
+    LOG.trace("Entering create [requestId={}]: Creating owner with data {}", MDC.get("r"), owner);
 
     KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -152,24 +182,33 @@ public class OwnerJdbcDao implements OwnerDao {
           .update(keyHolder);
 
       if (rowsAffected == 0 || keyHolder.getKey() == null) {
+        LOG.error("Unexpected error [requestId={}]: Failed to insert owner into database, no rows affected or no key returned", MDC.get("r"));
+
         throw new RuntimeException("Failed to insert owner into database");
       }
 
       Long id = keyHolder.getKey().longValue();
+      Owner createdOwner = new Owner(id, owner.firstName(), owner.lastName(), owner.description());
 
-      return new Owner(
-          id,
-          owner.firstName(),
-          owner.lastName(),
-          owner.description()
-      );
+      LOG.info("Successfully created owner with id {} [requestId={}]", id, MDC.get("r"));
+
+      return createdOwner;
 
     } catch (DataAccessException e) {
+      LOG.error("Database access failed [requestId={}]: Error creating owner with data {}", MDC.get("r"), owner, e);
+
       throw new PersistenceException("Error accessing database", e);
     }
   }
 
-
+  /**
+   * Maps a database row to an {@link Owner} entity.
+   *
+   * @param resultSet the result set containing the row data
+   * @param rowNum    the row number in the result set
+   * @return an {@link Owner} entity constructed from the row data
+   * @throws SQLException if an error occurs while accessing the result set
+   */
   private Owner mapRow(ResultSet resultSet, int rowNum) throws SQLException {
 
     return new Owner(
@@ -178,5 +217,4 @@ public class OwnerJdbcDao implements OwnerDao {
         resultSet.getString("last_name"),
         resultSet.getString("description"));
   }
-
 }
