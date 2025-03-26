@@ -2,6 +2,7 @@ package at.ac.tuwien.sepr.assignment.individual.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 
@@ -71,10 +72,12 @@ public class HorseEndpointTest {
     List<HorseListDto> horseResult = objectMapper.readerFor(HorseListDto.class).<HorseListDto>readValues(body).readAll();
 
     assertThat(horseResult).isNotNull();
-    assertThat(horseResult.size()).isGreaterThanOrEqualTo(10); // TODO: Adapt this to the exact number in the test data later
-    assertThat(horseResult)
-        .extracting(HorseListDto::id, HorseListDto::name)
-        .contains(tuple(-1L, "Wendys Grandmother"));
+    assertAll(
+        () -> assertThat(horseResult.size()).isGreaterThanOrEqualTo(10),
+        () -> assertThat(horseResult)
+            .extracting(HorseListDto::id, HorseListDto::name)
+            .contains(tuple(-1L, "Wendys Grandmother"))
+    );
   }
 
   /**
@@ -109,15 +112,17 @@ public class HorseEndpointTest {
     HorseDetailDto horse = objectMapper.readValue(result.getResponse().getContentAsByteArray(), HorseDetailDto.class);
 
     assertThat(horse).isNotNull();
-    assertThat(horse.id()).isEqualTo(-6L);
-    assertThat(horse.name()).isEqualTo("Wendy");
-    assertThat(horse.description()).isEqualTo("The new one!");
-    assertThat(horse.dateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 1));
-    assertThat(horse.sex()).isEqualTo(Sex.FEMALE);
-    assertThat(horse.owner()).isNotNull();
-    assertThat(horse.owner().firstName()).isEqualTo("Wendy");
-    assertThat(horse.mother().id()).isEqualTo(-3L);
-    assertThat(horse.father().id()).isEqualTo(-4L);
+    assertAll(
+        () -> assertThat(horse.id()).isEqualTo(-6L),
+        () -> assertThat(horse.name()).isEqualTo("Wendy"),
+        () -> assertThat(horse.description()).isEqualTo("The new one!"),
+        () -> assertThat(horse.dateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 1)),
+        () -> assertThat(horse.sex()).isEqualTo(Sex.FEMALE),
+        () -> assertThat(horse.owner()).isNotNull(),
+        () -> assertThat(horse.owner().firstName()).isEqualTo("Wendy"),
+        () -> assertThat(horse.mother().id()).isEqualTo(-3L),
+        () -> assertThat(horse.father().id()).isEqualTo(-4L)
+    );
   }
 
   /**
@@ -156,14 +161,16 @@ public class HorseEndpointTest {
     HorseDetailDto createdHorse = objectMapper.readValue(result.getResponse().getContentAsByteArray(), HorseDetailDto.class);
 
     assertThat(createdHorse).isNotNull();
-    assertThat(createdHorse.id()).isPositive();
-    assertThat(createdHorse.name()).isEqualTo("Test Horse");
-    assertThat(createdHorse.dateOfBirth()).isEqualTo(LocalDate.of(2023, 1, 1));
-    assertThat(createdHorse.sex()).isEqualTo(Sex.MALE);
-    assertThat(createdHorse.owner()).isNotNull();
-    assertThat(createdHorse.description()).isNull();
-    assertThat(createdHorse.mother()).isNull();
-    assertThat(createdHorse.father()).isNull();
+    assertAll(
+        () -> assertThat(createdHorse.id()).isPositive(),
+        () -> assertThat(createdHorse.name()).isEqualTo("Test Horse"),
+        () -> assertThat(createdHorse.dateOfBirth()).isEqualTo(LocalDate.of(2023, 1, 1)),
+        () -> assertThat(createdHorse.sex()).isEqualTo(Sex.MALE),
+        () -> assertThat(createdHorse.owner()).isNotNull(),
+        () -> assertThat(createdHorse.description()).isNull(),
+        () -> assertThat(createdHorse.mother()).isNull(),
+        () -> assertThat(createdHorse.father()).isNull()
+    );
   }
 
   /**
@@ -211,12 +218,14 @@ public class HorseEndpointTest {
     HorseDetailDto updatedHorse = objectMapper.readValue(result.getResponse().getContentAsByteArray(), HorseDetailDto.class);
 
     assertThat(updatedHorse).isNotNull();
-    assertThat(updatedHorse.id()).isEqualTo(-6L);
-    assertThat(updatedHorse.name()).isEqualTo("Wendy Updated");
-    assertThat(updatedHorse.description()).isEqualTo("Updated description");
-    assertThat(updatedHorse.dateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 1));
-    assertThat(updatedHorse.sex()).isEqualTo(Sex.FEMALE);
-    assertThat(updatedHorse.owner()).isNotNull();
+    assertAll(
+        () -> assertThat(updatedHorse.id()).isEqualTo(-6L),
+        () -> assertThat(updatedHorse.name()).isEqualTo("Wendy Updated"),
+        () -> assertThat(updatedHorse.description()).isEqualTo("Updated description"),
+        () -> assertThat(updatedHorse.dateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 1)),
+        () -> assertThat(updatedHorse.sex()).isEqualTo(Sex.FEMALE),
+        () -> assertThat(updatedHorse.owner()).isNotNull()
+    );
   }
 
   /**

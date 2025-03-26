@@ -2,6 +2,7 @@ package at.ac.tuwien.sepr.assignment.individual.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
@@ -39,7 +40,7 @@ public class HorseDaoTest {
   public void getAllReturnsAllStoredHorses() {
 
     List<Horse> horses = horseDao.getAll();
-    assertThat(horses.size()).isGreaterThanOrEqualTo(10); // TODO adapt to exact number of elements in test data later
+    assertThat(horses.size()).isGreaterThanOrEqualTo(10);
     assertThat(horses)
         .extracting(Horse::id, Horse::name)
         .contains(tuple(-1L, "Wendys Grandmother"));
@@ -68,15 +69,17 @@ public class HorseDaoTest {
     Horse created = horseDao.create(createDto, imageDto);
 
     assertThat(created).isNotNull();
-    assertThat(created.id()).isPositive();
-    assertThat(created.name()).isEqualTo("Test Horse");
-    assertThat(created.description()).isEqualTo("A test horse");
-    assertThat(created.dateOfBirth()).isEqualTo(LocalDate.of(2023, 1, 1));
-    assertThat(created.sex()).isEqualTo(Sex.MALE);
-    assertThat(created.ownerId()).isEqualTo(-1L);
-    assertThat(created.motherId()).isEqualTo(-3L);
-    assertThat(created.fatherId()).isEqualTo(-4L);
-    assertThat(created.imageUrl()).isEqualTo("/horses/" + created.id() + "/image");
+    assertAll(
+        () -> assertThat(created.id()).isPositive(),
+        () -> assertThat(created.name()).isEqualTo("Test Horse"),
+        () -> assertThat(created.description()).isEqualTo("A test horse"),
+        () -> assertThat(created.dateOfBirth()).isEqualTo(LocalDate.of(2023, 1, 1)),
+        () -> assertThat(created.sex()).isEqualTo(Sex.MALE),
+        () -> assertThat(created.ownerId()).isEqualTo(-1L),
+        () -> assertThat(created.motherId()).isEqualTo(-3L),
+        () -> assertThat(created.fatherId()).isEqualTo(-4L),
+        () -> assertThat(created.imageUrl()).isEqualTo("/horses/" + created.id() + "/image")
+    );
   }
 
   /**
@@ -90,15 +93,17 @@ public class HorseDaoTest {
     Horse horse = horseDao.getById(-6L); // Wendy
 
     assertThat(horse).isNotNull();
-    assertThat(horse.id()).isEqualTo(-6L);
-    assertThat(horse.name()).isEqualTo("Wendy");
-    assertThat(horse.description()).isEqualTo("The new one!");
-    assertThat(horse.dateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 1));
-    assertThat(horse.sex()).isEqualTo(Sex.FEMALE);
-    assertThat(horse.ownerId()).isEqualTo(-1L);
-    assertThat(horse.motherId()).isEqualTo(-3L);
-    assertThat(horse.fatherId()).isEqualTo(-4L);
-    assertThat(horse.imageUrl()).isNull();
+    assertAll(
+        () -> assertThat(horse.id()).isEqualTo(-6L),
+        () -> assertThat(horse.name()).isEqualTo("Wendy"),
+        () -> assertThat(horse.description()).isEqualTo("The new one!"),
+        () -> assertThat(horse.dateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 1)),
+        () -> assertThat(horse.sex()).isEqualTo(Sex.FEMALE),
+        () -> assertThat(horse.ownerId()).isEqualTo(-1L),
+        () -> assertThat(horse.motherId()).isEqualTo(-3L),
+        () -> assertThat(horse.fatherId()).isEqualTo(-4L),
+        () -> assertThat(horse.imageUrl()).isNull()
+    );
   }
 
   /**
@@ -152,15 +157,17 @@ public class HorseDaoTest {
     Horse updated = horseDao.update(updateDto, imageDto);
 
     assertThat(updated).isNotNull();
-    assertThat(updated.id()).isEqualTo(-7L);
-    assertThat(updated.name()).isEqualTo("Updated Husband");
-    assertThat(updated.description()).isEqualTo("The updated strong one!");
-    assertThat(updated.dateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 1));
-    assertThat(updated.sex()).isEqualTo(Sex.MALE);
-    assertThat(updated.ownerId()).isEqualTo(-2L);
-    assertThat(updated.motherId()).isNull();
-    assertThat(updated.fatherId()).isNull();
-    assertThat(updated.imageUrl()).isEqualTo("/horses/-7/image");
+    assertAll(
+        () -> assertThat(updated.id()).isEqualTo(-7L),
+        () -> assertThat(updated.name()).isEqualTo("Updated Husband"),
+        () -> assertThat(updated.description()).isEqualTo("The updated strong one!"),
+        () -> assertThat(updated.dateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 1)),
+        () -> assertThat(updated.sex()).isEqualTo(Sex.MALE),
+        () -> assertThat(updated.ownerId()).isEqualTo(-2L),
+        () -> assertThat(updated.motherId()).isNull(),
+        () -> assertThat(updated.fatherId()).isNull(),
+        () -> assertThat(updated.imageUrl()).isEqualTo("/horses/-7/image")
+    );
   }
 
   /**
@@ -181,7 +188,9 @@ public class HorseDaoTest {
 
     List<Horse> results = horseDao.search(searchDto);
 
-    assertThat(results).isNotNull();
-    assertThat(results).isEmpty();
+    assertAll(
+        () -> assertThat(results).isNotNull(),
+        () -> assertThat(results).isEmpty()
+    );
   }
 }

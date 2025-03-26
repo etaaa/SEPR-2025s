@@ -2,6 +2,7 @@ package at.ac.tuwien.sepr.assignment.individual.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
@@ -43,11 +44,13 @@ public class HorseServiceTest {
     List<HorseListDto> horses = horseService.getAll()
         .toList();
 
-    assertThat(horses.size()).isGreaterThanOrEqualTo(10); // TODO: Adapt to exact number of test data entries
-
-    assertThat(horses)
-        .map(HorseListDto::id, HorseListDto::sex)
-        .contains(tuple(-1L, Sex.FEMALE));
+    assertThat(horses).isNotNull();
+    assertAll(
+        () -> assertThat(horses.size()).isGreaterThanOrEqualTo(10),
+        () -> assertThat(horses)
+            .map(HorseListDto::id, HorseListDto::sex)
+            .contains(tuple(-1L, Sex.FEMALE))
+    );
   }
 
   /**
@@ -76,17 +79,19 @@ public class HorseServiceTest {
     HorseDetailDto created = horseService.create(createDto, imageDto);
 
     assertThat(created).isNotNull();
-    assertThat(created.id()).isPositive();
-    assertThat(created.name()).isEqualTo("New Horse");
-    assertThat(created.description()).isEqualTo("A new test horse");
-    assertThat(created.dateOfBirth()).isEqualTo(LocalDate.of(2023, 1, 1));
-    assertThat(created.sex()).isEqualTo(Sex.FEMALE);
-    assertThat(created.owner().firstName()).isEqualTo("Wendy");
-    assertThat(created.mother().id()).isEqualTo(-3L);
-    assertThat(created.mother().name()).isEqualTo("Wendys Mother");
-    assertThat(created.father().id()).isEqualTo(-4L);
-    assertThat(created.father().name()).isEqualTo("Wendys Father");
-    assertThat(created.imageUrl()).isEqualTo("/horses/" + created.id() + "/image");
+    assertAll(
+        () -> assertThat(created.id()).isPositive(),
+        () -> assertThat(created.name()).isEqualTo("New Horse"),
+        () -> assertThat(created.description()).isEqualTo("A new test horse"),
+        () -> assertThat(created.dateOfBirth()).isEqualTo(LocalDate.of(2023, 1, 1)),
+        () -> assertThat(created.sex()).isEqualTo(Sex.FEMALE),
+        () -> assertThat(created.owner().firstName()).isEqualTo("Wendy"),
+        () -> assertThat(created.mother().id()).isEqualTo(-3L),
+        () -> assertThat(created.mother().name()).isEqualTo("Wendys Mother"),
+        () -> assertThat(created.father().id()).isEqualTo(-4L),
+        () -> assertThat(created.father().name()).isEqualTo("Wendys Father"),
+        () -> assertThat(created.imageUrl()).isEqualTo("/horses/" + created.id() + "/image")
+    );
   }
 
   /**
@@ -100,17 +105,19 @@ public class HorseServiceTest {
     HorseDetailDto horse = horseService.getById(-6L); // Wendy
 
     assertThat(horse).isNotNull();
-    assertThat(horse.id()).isEqualTo(-6L);
-    assertThat(horse.name()).isEqualTo("Wendy");
-    assertThat(horse.description()).isEqualTo("The new one!");
-    assertThat(horse.dateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 1));
-    assertThat(horse.sex()).isEqualTo(Sex.FEMALE);
-    assertThat(horse.owner().firstName()).isEqualTo("Wendy");
-    assertThat(horse.mother().id()).isEqualTo(-3L);
-    assertThat(horse.mother().name()).isEqualTo("Wendys Mother");
-    assertThat(horse.father().id()).isEqualTo(-4L);
-    assertThat(horse.father().name()).isEqualTo("Wendys Father");
-    assertThat(horse.imageUrl()).isNull();
+    assertAll(
+        () -> assertThat(horse.id()).isEqualTo(-6L),
+        () -> assertThat(horse.name()).isEqualTo("Wendy"),
+        () -> assertThat(horse.description()).isEqualTo("The new one!"),
+        () -> assertThat(horse.dateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 1)),
+        () -> assertThat(horse.sex()).isEqualTo(Sex.FEMALE),
+        () -> assertThat(horse.owner().firstName()).isEqualTo("Wendy"),
+        () -> assertThat(horse.mother().id()).isEqualTo(-3L),
+        () -> assertThat(horse.mother().name()).isEqualTo("Wendys Mother"),
+        () -> assertThat(horse.father().id()).isEqualTo(-4L),
+        () -> assertThat(horse.father().name()).isEqualTo("Wendys Father"),
+        () -> assertThat(horse.imageUrl()).isNull()
+    );
   }
 
   /**
@@ -133,14 +140,17 @@ public class HorseServiceTest {
 
     List<HorseListDto> results = horseService.search(searchDto).toList();
 
-    assertThat(results).isNotEmpty();
-    assertThat(results.size()).isLessThanOrEqualTo(10);
-    assertThat(results)
-        .extracting(HorseListDto::name)
-        .contains("Wendy", "Wendys Mother", "Wendys Grandmother");
-    assertThat(results)
-        .extracting(HorseListDto::dateOfBirth)
-        .allMatch(date -> date.isBefore(LocalDate.of(2025, 1, 1)));
+    assertThat(results).isNotNull();
+    assertAll(
+        () -> assertThat(results).isNotEmpty(),
+        () -> assertThat(results.size()).isLessThanOrEqualTo(10),
+        () -> assertThat(results)
+            .extracting(HorseListDto::name)
+            .contains("Wendy", "Wendys Mother", "Wendys Grandmother"),
+        () -> assertThat(results)
+            .extracting(HorseListDto::dateOfBirth)
+            .allMatch(date -> date.isBefore(LocalDate.of(2025, 1, 1)))
+    );
   }
 
   /**
