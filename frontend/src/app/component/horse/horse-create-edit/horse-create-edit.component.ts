@@ -91,7 +91,7 @@ export class HorseCreateEditComponent implements OnInit {
       case HorseCreateEditMode.create:
         return 'Create';
       case HorseCreateEditMode.edit:
-        return 'Save';
+        return 'Edit';
       default:
         return '?';
     }
@@ -212,9 +212,15 @@ export class HorseCreateEditComponent implements OnInit {
               }
             },
             error: err => {
-              console.error('Error loading horse', err);
+              this.notification.error(this.errorFormatter.format(err), 'Could Not Load Horse', {
+                enableHtml: true,
+                timeOut: 10000,
+              });
+              this.router.navigate(['/horses']);
             }
           });
+        } else {
+          this.router.navigate(['/horses']);
         }
       }
     });
@@ -274,7 +280,6 @@ export class HorseCreateEditComponent implements OnInit {
    * @param form The form containing the horse data
    */
   public onSubmit(form: NgForm): void {
-    console.log('is form valid?', form.valid, this.horse);
     if (form.valid) {
       if (this.horse.description === '') {
         delete this.horse.description;
@@ -316,7 +321,6 @@ export class HorseCreateEditComponent implements OnInit {
           observable = this.service.update(this.horse.id!, formData);
           break;
         default:
-          console.error('Unknown HorseCreateEditMode', this.mode);
           return;
       }
       observable.subscribe({
@@ -325,8 +329,7 @@ export class HorseCreateEditComponent implements OnInit {
           this.router.navigate(['/horses']);
         },
         error: error => {
-          console.error('Error creating horse', error);
-          this.notification.error(this.errorFormatter.format(error), 'Could Not Create Horse', {
+          this.notification.error(this.errorFormatter.format(error), `Could Not ${this.submitButtonText} Horse`, {
             enableHtml: true,
             timeOut: 10000,
           });

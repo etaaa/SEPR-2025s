@@ -13,7 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
-
+/**
+ * Validator for owner-related operations, ensuring that all owner data meets the required constraints.
+ */
 @Component
 public class OwnerValidator {
 

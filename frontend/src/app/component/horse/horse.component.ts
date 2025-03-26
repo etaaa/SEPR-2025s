@@ -88,7 +88,6 @@ export class HorseComponent implements OnInit {
    * Reloads the list of horses based on current search filters.
    */
   reloadHorses() {
-    console.log('searchFilter:', this.searchFilter);
     this.service.getAllOrSearch(this.searchFilter)
       .subscribe({
         next: data => {
@@ -96,7 +95,6 @@ export class HorseComponent implements OnInit {
           this.bannerError = null;
         },
         error: error => {
-          console.error('Error fetching horses', error);
           this.bannerError = 'Could not fetch horses: ' + error.message;
           const errorMessage = error.status === 0
             ? 'Is the backend up?'

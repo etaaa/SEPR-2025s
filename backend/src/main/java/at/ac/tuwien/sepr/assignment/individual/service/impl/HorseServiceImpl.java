@@ -38,7 +38,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 /**
- * Implementation of {@link HorseService} for handling image storage and retrieval.
+ * Service implementation for managing horse-related operations.
  */
 @Service
 public class HorseServiceImpl implements HorseService {
@@ -297,6 +297,7 @@ public class HorseServiceImpl implements HorseService {
     LOG.trace("Entering create [requestId={}]: Creating horse with data {}", MDC.get("r"), horse);
 
     validator.validateForCreate(horse);
+    validator.validateImage(image);
 
     var createdHorse = dao.create(horse, image);
 
@@ -343,6 +344,7 @@ public class HorseServiceImpl implements HorseService {
     LOG.trace("Entering update [requestId={}]: Updating horse with id {} and data {}", MDC.get("r"), horse.id(), horse);
 
     validator.validateForUpdate(horse);
+    validator.validateImage(image);
 
     var updatedHorse = dao.update(horse, image);
 

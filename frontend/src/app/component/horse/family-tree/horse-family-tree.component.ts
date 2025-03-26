@@ -117,7 +117,6 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
           this.loading = false;
         },
         error: error => {
-          console.error('Error loading family tree', error);
           this.notification.error(this.errorFormatter.format(error), 'Could not load family tree', {
             enableHtml: true,
             timeOut: 10000,
@@ -180,7 +179,6 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
         if (this.horse && this.horse.id !== undefined) {
           this.loadFamilyTree(this.horse.id, this.generations);
         } else {
-          console.error('Cannot load family tree: Horse ID is missing');
           this.notification.error('Cannot load family tree', 'Missing horse ID');
         }
       });
@@ -237,7 +235,6 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
           if (this.horse && this.horse.id !== undefined) {
             this.loadFamilyTree(this.horse.id, this.generations);
           } else {
-            console.error('Cannot load family tree: Horse ID is missing');
             this.notification.error('Cannot load family tree', 'Missing horse ID');
           }
         }

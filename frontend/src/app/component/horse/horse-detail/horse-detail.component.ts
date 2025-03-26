@@ -80,7 +80,6 @@ export class HorseDetailComponent implements OnInit, OnDestroy {
         this.loading = false;
       },
       error: error => {
-        console.error('Error loading horse details', error);
         this.notification.error(this.errorFormatter.format(error), 'Could Not Load Horse Details', {
           enableHtml: true,
           timeOut: 10000,

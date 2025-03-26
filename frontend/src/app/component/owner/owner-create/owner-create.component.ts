@@ -74,7 +74,6 @@ export class OwnerCreateComponent {
             this.router.navigate(['/owners']);
           },
           error: error => {
-            console.error('Error creating owner', error);
             this.notification.error(this.errorFormatter.format(error), 'Could Not Create Owner', {
               enableHtml: true,
               timeOut: 10000,

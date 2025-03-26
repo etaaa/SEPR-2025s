@@ -2,6 +2,7 @@ package at.ac.tuwien.sepr.assignment.individual.service.impl;
 
 
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseCreateDto;
+import at.ac.tuwien.sepr.assignment.individual.dto.HorseImageDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseSearchDto;
 import at.ac.tuwien.sepr.assignment.individual.dto.HorseUpdateDto;
 import at.ac.tuwien.sepr.assignment.individual.entity.Horse;
@@ -13,6 +14,7 @@ import java.lang.invoke.MethodHandles;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import at.ac.tuwien.sepr.assignment.individual.persistence.HorseDao;
 import at.ac.tuwien.sepr.assignment.individual.service.OwnerService;
@@ -32,6 +34,7 @@ public class HorseValidator {
   private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private final HorseDao horseDao;
   private final OwnerService ownerService;
+  private static final Set<String> SUPPORTED_IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/gif", "image/webp", "image/heic");
 
   @Autowired
   public HorseValidator(HorseDao horseDao, OwnerService ownerService) {
@@ -105,10 +108,48 @@ public class HorseValidator {
 
     if (!validationErrors.isEmpty()) {
       LOG.warn("Validation of generations parameter failed [requestId={}]: {}", MDC.get("r"), validationErrors);
+
       throw new ValidationException("Validation of generations parameter failed", validationErrors);
     }
 
     LOG.debug("Successfully validated generations [requestId={}]: {}", MDC.get("r"), generations);
+  }
+
+  /**
+   * Validates the horse image data, ensuring the MIME type is supported and valid.
+   *
+   * @param image the image DTO to validate, or null if no image is provided
+   * @throws ValidationException if the MIME type is missing, invalid, or unsupported
+   */
+  public void validateImage(HorseImageDto image) throws ValidationException {
+
+    LOG.trace("Entering validateImage [requestId={}]: Validating image with MIME type {}", MDC.get("r"), image != null ? image.mimeType() : null);
+
+    List<String> validationErrors = new ArrayList<>();
+
+    if (image == null) {
+      LOG.debug("No image provided for validation [requestId={}]", MDC.get("r"));
+
+      return;
+    }
+
+    if (image.mimeType() == null || image.mimeType().trim().isEmpty()) {
+      validationErrors.add("Image MIME type is required and cannot be empty");
+    } else if (!SUPPORTED_IMAGE_TYPES.contains(image.mimeType().toLowerCase())) {
+      validationErrors.add("Unsupported image MIME type: " + image.mimeType() + ". Supported types are: " + SUPPORTED_IMAGE_TYPES);
+    }
+
+    if (image.image() == null || image.image().length == 0) {
+      validationErrors.add("Image data is required and cannot be empty");
+    }
+
+    if (!validationErrors.isEmpty()) {
+      LOG.warn("Validation of horse image failed [requestId={}]: {}", MDC.get("r"), validationErrors);
+
+      throw new ValidationException("Validation of horse image failed", validationErrors);
+    }
+
+    LOG.debug("Successfully validated horse image [requestId={}]: MIME type {}", MDC.get("r"), image.mimeType());
   }
 
   /**
@@ -199,10 +240,12 @@ public class HorseValidator {
 
     if (!validationErrors.isEmpty()) {
       LOG.warn("Validation of horse for create failed [requestId={}]: {}", MDC.get("r"), validationErrors);
+
       throw new ValidationException("Validation of horse for create failed", validationErrors);
     }
     if (!conflictErrors.isEmpty()) {
       LOG.warn("Conflict detected during horse creation [requestId={}]: {}", MDC.get("r"), conflictErrors);
+
       throw new ConflictException("Conflict with existing data", conflictErrors);
     }
 
@@ -319,10 +362,12 @@ public class HorseValidator {
 
     if (!validationErrors.isEmpty()) {
       LOG.warn("Validation of horse for update failed [requestId={}]: {}", MDC.get("r"), validationErrors);
+
       throw new ValidationException("Validation of horse for update failed", validationErrors);
     }
     if (!conflictErrors.isEmpty()) {
       LOG.warn("Conflict detected during horse update [requestId={}]: {}", MDC.get("r"), conflictErrors);
+
       throw new ConflictException("Conflict with existing data", conflictErrors);
     }
 

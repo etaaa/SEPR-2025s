@@ -132,9 +132,7 @@ export class HorseService {
         this.notification.success(`Horse ${horse.name} was deleted`, 'Success');
       }),
       catchError(error => {
-        console.error('Error deleting horse', error);
         const errorMessage = (error.error && error.error.message) || 'An unknown error occurred';
-        console.log('Backend error message:', errorMessage);
         this.notification.error(errorMessage, `Could Not Delete Horse ${horse.name}`);
         throw error;
       })
