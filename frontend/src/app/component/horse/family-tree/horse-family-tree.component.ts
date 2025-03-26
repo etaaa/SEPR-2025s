@@ -11,9 +11,23 @@ import {ConfirmDeleteDialogComponent} from 'src/app/component/confirm-delete-dia
 import {Subscription} from 'rxjs';
 import {ErrorFormatterService} from "../../../service/error-formatter.service";
 
+/**
+ * Interface representing a horse in the family tree with additional properties.
+ */
 interface FamilyTreeHorse extends Horse {
+  /**
+   * Indicates whether the horse's family tree is expanded in the UI.
+   */
   isExpanded?: boolean;
+
+  /**
+   * The horse's mother in the family tree.
+   */
   mother?: FamilyTreeHorse;
+
+  /**
+   * The horse's father in the family tree.
+   */
   father?: FamilyTreeHorse;
 }
 
@@ -29,6 +43,10 @@ interface FamilyTreeHorse extends Horse {
   standalone: true,
   styleUrls: ['./horse-family-tree.component.scss']
 })
+
+/**
+ * Component for displaying and managing a horse's family tree.
+ */
 export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
   horse: FamilyTreeHorse | null = null;
   loading = true;
@@ -49,6 +67,9 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
   ) {
   }
 
+  /**
+   * Initializes the component by subscribing to route parameters and loading the family tree.
+   */
   ngOnInit(): void {
     this.routeSubscription = this.route.paramMap.subscribe(params => {
       const id = params.get('id');
@@ -67,16 +88,21 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Cleans up the component by unsubscribing from route parameter subscription.
+   */
   ngOnDestroy(): void {
     if (this.routeSubscription) {
       this.routeSubscription.unsubscribe();
     }
   }
 
-  public onCancel(): void {
-    this.location.back();
-  }
-
+  /**
+   * Loads the family tree for a horse with the specified ID and number of generations.
+   *
+   * @param id The ID of the horse to load the family tree for
+   * @param generations The number of generations to include in the family tree
+   */
   loadFamilyTree(id: number, generations: number): void {
     this.loading = true;
     this.error = false;
@@ -102,6 +128,13 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Processes horse data recursively to fix dates and set expansion state.
+   *
+   * @param horse The horse object to process
+   * @returns The processed horse object with updated properties
+   * @private
+   */
   private processHorseData(horse: FamilyTreeHorse): FamilyTreeHorse {
     if (!horse) return horse;
     horse.dateOfBirth = new Date(horse.dateOfBirth as unknown as string);
@@ -116,10 +149,18 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
     return horse;
   }
 
+  /**
+   * Toggles the expanded state of a horse in the family tree.
+   *
+   * @param horse The horse whose expansion state should be toggled
+   */
   toggleExpand(horse: FamilyTreeHorse): void {
     horse.isExpanded = !horse.isExpanded;
   }
 
+  /**
+   * Updates the number of generations displayed in the family tree and reloads it.
+   */
   updateGenerations(): void {
     if (this.generations > 10) {
       this.notification.error('Maximum generations allowed is 10', 'Invalid Input');
@@ -146,10 +187,18 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Navigates back to the previous page in the browser history.
+   */
   public goBack(): void {
     this.location.back();
   }
 
+  /**
+   * Validates and corrects the generations input field value.
+   *
+   * @param event The input event from the generations field
+   */
   validateGenerations(event: Event): void {
     const input = event.target as HTMLInputElement;
     const value = parseInt(input.value, 10);
@@ -164,10 +213,21 @@ export class HorseFamilyTreeComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Formats a date object as a localized date string.
+   *
+   * @param date The date to format
+   * @returns The formatted date string
+   */
   formatDate(date: Date): string {
     return date.toLocaleDateString();
   }
 
+  /**
+   * Deletes a horse and updates the family tree or navigates away if the root horse is deleted.
+   *
+   * @param horse The horse to delete
+   */
   deleteHorse(horse: Horse): void {
     this.service.deleteHorse(horse).subscribe({
       next: () => {

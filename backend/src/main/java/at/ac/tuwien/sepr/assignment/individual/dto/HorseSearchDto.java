@@ -3,7 +3,6 @@ package at.ac.tuwien.sepr.assignment.individual.dto;
 import at.ac.tuwien.sepr.assignment.individual.type.Sex;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -22,6 +21,11 @@ public record HorseSearchDto(
     Integer limit
 ) {
 
+  /**
+   * Checks if all search parameters are empty.
+   *
+   * @return true if all search parameters are null, false otherwise
+   */
   public boolean isEmpty() {
     return name == null
         && description == null

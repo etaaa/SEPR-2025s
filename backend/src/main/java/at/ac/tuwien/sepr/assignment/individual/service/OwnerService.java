@@ -18,39 +18,48 @@ import java.util.stream.Stream;
 public interface OwnerService {
 
   /**
-   * Fetch an owner from the persistent data store by its ID.
+   * Retrieves an owner from the persistent data store by its unique identifier.
    *
-   * @param id the ID of the owner to get
-   * @return the owner with the given ID
-   * @throws NotFoundException if no owner with the given ID exists in the persistent data store
+   * @param id the unique identifier of the owner to retrieve
+   * @return an {@link OwnerDto} representing the owner with the specified ID
+   * @throws NotFoundException if no owner with the given {@code id} exists in the persistent data store
    */
   OwnerDto getById(long id) throws NotFoundException;
 
+  /**
+   * Retrieves all owners from the persistent data store.
+   *
+   * @return a stream of {@link OwnerDto} objects representing all owners
+   */
   Stream<OwnerDto> getAll();
 
   /**
-   * Fetch all owners referenced by the IDs in {@code ids}
+   * Retrieves multiple owners by their unique identifiers.
    *
-   * @param ids the IDs of the owners, that should be fetched
-   * @return a map that contains the requested owners with their IDs as key
-   * @throws NotFoundException if any of the requested owners is not found
+   * @param ids a collection of owner IDs to retrieve
+   * @return a map of owner IDs to {@link HorseDetailOwnerDto} objects containing the requested owners
+   * @throws NotFoundException if any owner with an ID in {@code ids} is not found in the persistent data store
    */
   Map<Long, HorseDetailOwnerDto> getAllById(Collection<Long> ids) throws NotFoundException;
 
   /**
-   * Search for owners matching the criteria in {@code searchParameters}.
+   * Searches for owners based on specified search criteria.
+   * An owner matches if its name contains {@code searchParameters.name} as a substring (case-sensitive).
+   * The result is limited to {@code searchParameters.limit} entries.
    *
-   * <p>
-   * A owner is considered matched, if its name contains {@code searchParameters.name} as a substring.
-   * The returned stream of owners never contains more than {@code searchParameters.limit} elements,
-   * even if there would be more matches in the persistent data store.
-   * </p>
-   *
-   * @param searchParameters object containing the search parameters to match
-   * @return a stream containing owners matching the criteria in {@code searchParameters}
+   * @param searchParameters the search criteria to apply
+   * @return a stream of {@link OwnerDto} objects matching the search criteria
+   * @throws ValidationException if {@code searchParameters} is invalid (e.g., limit is null or negative)
    */
   Stream<OwnerDto> search(OwnerSearchDto searchParameters) throws ValidationException;
 
-
+  /**
+   * Creates a new owner in the persistent data store.
+   *
+   * @param owner the data transfer object containing the owner details to create
+   * @return an {@link OwnerDto} representing the newly created owner
+   * @throws ValidationException if {@code owner} data is invalid (e.g., missing first name, description too long)
+   * @throws ConflictException   if the creation conflicts with existing data (e.g., system-specific constraints)
+   */
   OwnerDto create(OwnerCreateDto owner) throws ValidationException, ConflictException;
 }

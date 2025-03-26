@@ -125,6 +125,11 @@ public class HorseValidator {
 
     List<String> validationErrors = new ArrayList<>();
 
+    /*
+    Note: Horse names are not checked for specific formats (e.g., no special characters) to allow flexibility,
+    such as supporting international names (e.g., Japanese names with unique characters). This applies for all
+    methods in this class and also for other string fields (e.g. description).
+     */
     if (horse.name() == null || horse.name().isBlank()) {
       validationErrors.add("Horse name is required and cannot be empty");
     }

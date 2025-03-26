@@ -5,7 +5,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {ToastrService} from 'ngx-toastr';
 import {Observable, of} from 'rxjs';
 import {AutocompleteComponent} from 'src/app/component/autocomplete/autocomplete.component';
-import {Horse, convertFromHorseToCreate} from 'src/app/dto/horse';
+import {Horse} from 'src/app/dto/horse';
 import {Owner} from 'src/app/dto/owner';
 import {Sex} from 'src/app/dto/sex';
 import {ErrorFormatterService} from 'src/app/service/error-formatter.service';
@@ -14,6 +14,9 @@ import {OwnerService} from 'src/app/service/owner.service';
 import {formatIsoDate} from "../../../utils/date-helper";
 import {environment} from "../../../../environments/environment";
 
+/**
+ * Enum representing the mode of the horse create/edit component.
+ */
 export enum HorseCreateEditMode {
   create,
   edit
@@ -33,6 +36,10 @@ const baseUri = environment.backendUrl;
   standalone: true,
   styleUrls: ['./horse-create-edit.component.scss']
 })
+
+/**
+ * Component for creating or editing a horse's details.
+ */
 export class HorseCreateEditComponent implements OnInit {
 
   mode: HorseCreateEditMode = HorseCreateEditMode.create;
@@ -58,6 +65,11 @@ export class HorseCreateEditComponent implements OnInit {
   ) {
   }
 
+  /**
+   * Gets the heading text based on the current mode.
+   *
+   * @returns The heading string for the component
+   */
   public get heading(): string {
     switch (this.mode) {
       case HorseCreateEditMode.create:
@@ -69,6 +81,11 @@ export class HorseCreateEditComponent implements OnInit {
     }
   }
 
+  /**
+   * Gets the submit button text based on the current mode.
+   *
+   * @returns The submit button text
+   */
   public get submitButtonText(): string {
     switch (this.mode) {
       case HorseCreateEditMode.create:
@@ -80,6 +97,11 @@ export class HorseCreateEditComponent implements OnInit {
     }
   }
 
+  /**
+   * Gets the horse's birth date as an ISO-formatted string.
+   *
+   * @returns The formatted birth date or an empty string if not set
+   */
   public get horseBirthDateText(): string {
     if (!this.horseBirthDateIsSet) {
       return '';
@@ -88,6 +110,11 @@ export class HorseCreateEditComponent implements OnInit {
     }
   }
 
+  /**
+   * Sets the horse's birth date from an ISO-formatted string.
+   *
+   * @param date The date string to set
+   */
   public set horseBirthDateText(date: string) {
     if (date == null || date === '') {
       this.horseBirthDateIsSet = false;
@@ -97,6 +124,11 @@ export class HorseCreateEditComponent implements OnInit {
     }
   }
 
+  /**
+   * Gets the display text for the horse's sex.
+   *
+   * @returns The sex as a string ('Male' or 'Female')
+   */
   get sex(): string {
     switch (this.horse.sex) {
       case Sex.male:
@@ -108,6 +140,12 @@ export class HorseCreateEditComponent implements OnInit {
     }
   }
 
+  /**
+   * Gets the action completion text based on the current mode.
+   *
+   * @returns The action text ('created' or 'edited')
+   * @private
+   */
   private get modeActionFinished(): string {
     switch (this.mode) {
       case HorseCreateEditMode.create:
@@ -119,22 +157,46 @@ export class HorseCreateEditComponent implements OnInit {
     }
   }
 
+  /**
+   * Provides owner suggestions for the autocomplete feature.
+   *
+   * @param input The search string entered by the user
+   * @returns An Observable of owner suggestions
+   */
   ownerSuggestions = (input: string) => (input === '')
     ? of([])
     : this.ownerService.searchByName(input);
 
+  /**
+   * Provides mother suggestions for the autocomplete feature.
+   *
+   * @param input The search string entered by the user
+   * @returns An Observable of female horse suggestions
+   */
   motherSuggestions = (input: string) => (input === '')
     ? of([])
     : this.service.getAllOrSearch({name: input, limit: 5, sex: 'FEMALE', excludeId: this.horse.id!});
 
+  /**
+   * Provides father suggestions for the autocomplete feature.
+   *
+   * @param input The search string entered by the user
+   * @returns An Observable of male horse suggestions
+   */
   fatherSuggestions = (input: string) => (input === '')
     ? of([])
     : this.service.getAllOrSearch({name: input, limit: 5, sex: 'MALE', excludeId: this.horse.id!});
 
+  /**
+   * Cancels the create/edit process and navigates back to the previous page.
+   */
   public onCancel(): void {
     this.location.back();
   }
 
+  /**
+   * Initializes the component by setting the mode and loading horse data if in edit mode.
+   */
   ngOnInit(): void {
     this.route.data.subscribe(data => {
       this.mode = data.mode;
@@ -158,30 +220,59 @@ export class HorseCreateEditComponent implements OnInit {
     });
   }
 
+  /**
+   * Determines dynamic CSS classes for form inputs based on their validation state.
+   *
+   * @param input The form input model to evaluate
+   * @returns An object containing CSS classes (e.g., 'is-invalid')
+   */
   public dynamicCssClassesForInput(input: NgModel): any {
     return {
       'is-invalid': !input.valid && !input.pristine,
     };
   }
 
+  /**
+   * Formats an owner's name for display.
+   *
+   * @param owner The owner object to format
+   * @returns The formatted owner name or an empty string if null/undefined
+   */
   public formatOwnerName(owner: Owner | null | undefined): string {
     return (owner == null)
       ? ''
       : `${owner.firstName} ${owner.lastName}`;
   }
 
+  /**
+   * Formats a mother's name for display.
+   *
+   * @param mother The mother horse object to format
+   * @returns The mother's name or an empty string if null/undefined
+   */
   public formatMotherName(mother: Horse | null | undefined): string {
     return (mother == null)
       ? ''
       : mother.name;
   }
 
+  /**
+   * Formats a father's name for display.
+   *
+   * @param father The father horse object to format
+   * @returns The father's name or an empty string if null/undefined
+   */
   public formatFatherName(father: Horse | null | undefined): string {
     return (father == null)
       ? ''
       : father.name;
   }
 
+  /**
+   * Submits the horse create/edit form and handles the creation or update process.
+   *
+   * @param form The form containing the horse data
+   */
   public onSubmit(form: NgForm): void {
     console.log('is form valid?', form.valid, this.horse);
     if (form.valid) {
@@ -244,6 +335,11 @@ export class HorseCreateEditComponent implements OnInit {
     }
   }
 
+  /**
+   * Handles the selection of an image file for the horse.
+   *
+   * @param event The file input event
+   */
   public onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
@@ -257,6 +353,9 @@ export class HorseCreateEditComponent implements OnInit {
     }
   }
 
+  /**
+   * Deletes the selected or existing image for the horse.
+   */
   public deleteImage(): void {
     this.selectedFile = null;
     this.imageSrc = null;

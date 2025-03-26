@@ -54,9 +54,9 @@ public class HorseEndpointTest {
   }
 
   /**
-   * Tests retrieving all horses from the endpoint.
+   * Positive test: Retrieves all horses from the endpoint and verifies the response contains expected data.
    *
-   * @throws Exception if the request fails
+   * @throws Exception if the request fails unexpectedly
    */
   @Test
   public void gettingAllHorses() throws Exception {
@@ -78,9 +78,9 @@ public class HorseEndpointTest {
   }
 
   /**
-   * Tests that accessing a nonexistent URL returns a 404 status.
+   * Negative test: Attempts to access a nonexistent URL and verifies a 404 Not Found response.
    *
-   * @throws Exception if the request fails
+   * @throws Exception if the request fails unexpectedly
    */
   @Test
   public void gettingNonexistentUrlReturns404() throws Exception {
@@ -92,10 +92,9 @@ public class HorseEndpointTest {
   }
 
   /**
-   * Tests retrieving a horse by ID with valid data.
-   * Verifies all fields match the expected test data.
+   * Positive test: Retrieves a horse by ID and verifies the response contains all expected fields.
    *
-   * @throws Exception if the request fails
+   * @throws Exception if the request fails unexpectedly
    */
   @Test
   public void retrieveHorseByIdValid() throws Exception {
@@ -122,10 +121,9 @@ public class HorseEndpointTest {
   }
 
   /**
-   * Tests retrieving a horse with a non-existent ID.
-   * Expects a 404 Not Found response.
+   * Negative test: Attempts to retrieve a horse with a non-existent ID and verifies a 404 Not Found response.
    *
-   * @throws Exception if the request fails
+   * @throws Exception if the request fails unexpectedly
    */
   @Test
   public void retrieveHorseByIdNotFound() throws Exception {
@@ -138,10 +136,9 @@ public class HorseEndpointTest {
   }
 
   /**
-   * Tests creating a new horse with minimal valid data.
-   * Verifies the horse is created with correct fields and a positive ID.
+   * Positive test: Creates a new horse with minimal valid data and verifies the response contains the created horse.
    *
-   * @throws Exception if the request fails
+   * @throws Exception if the request fails unexpectedly
    */
   @Test
   public void createNewHorseValid() throws Exception {
@@ -170,10 +167,9 @@ public class HorseEndpointTest {
   }
 
   /**
-   * Tests creating a horse with missing required data (no name).
-   * Expects a 400 Bad Request response due to binding failure.
+   * Negative test: Attempts to create a horse with missing required data (no name) and verifies a 422 Unprocessable Entity response.
    *
-   * @throws Exception if the request fails
+   * @throws Exception if the request fails unexpectedly
    */
   @Test
   public void createHorseMissingName() throws Exception {
@@ -188,10 +184,9 @@ public class HorseEndpointTest {
   }
 
   /**
-   * Tests updating an existing horse with valid data.
-   * Verifies the updated fields are correctly applied.
+   * Positive test: Updates an existing horse with valid data and verifies the response reflects the updated fields.
    *
-   * @throws Exception if the request fails
+   * @throws Exception if the request fails unexpectedly
    */
   @Test
   public void updateHorseValid() throws Exception {
@@ -225,10 +220,9 @@ public class HorseEndpointTest {
   }
 
   /**
-   * Tests updating a non-existent horse.
-   * Expects a 404 Not Found response.
+   * Negative test: Attempts to update a non-existent horse and verifies a 422 Unprocessable Entity response.
    *
-   * @throws Exception if the request fails
+   * @throws Exception if the request fails unexpectedly
    */
   @Test
   public void updateHorseNotFound() throws Exception {

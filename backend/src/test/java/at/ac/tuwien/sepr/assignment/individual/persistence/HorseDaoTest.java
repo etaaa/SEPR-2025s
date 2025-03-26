@@ -33,8 +33,7 @@ public class HorseDaoTest {
   HorseDao horseDao;
 
   /**
-   * Tests that retrieving all stored horses returns at least one entry
-   * and verifies that a specific horse exists in the test dataset.
+   * Positive test: Verifies that retrieving all horses returns the expected number and a specific horse from test data.
    */
   @Test
   public void getAllReturnsAllStoredHorses() {
@@ -47,7 +46,7 @@ public class HorseDaoTest {
   }
 
   /**
-   * Positive test: Creates a new horse and verifies it was persisted correctly.
+   * Positive test: Creates a new horse with valid data and image, and verifies it was persisted correctly.
    */
   @Test
   public void createHorseSuccessfully() {
@@ -81,7 +80,9 @@ public class HorseDaoTest {
   }
 
   /**
-   * Positive test: Retrieves a horse by ID and verifies all fields.
+   * Positive test: Retrieves an existing horse by ID and verifies all fields match expected test data.
+   *
+   * @throws NotFoundException if the horse with ID -6 does not exist (not expected with test data)
    */
   @Test
   public void getByIdReturnsCorrectHorse() throws NotFoundException {
@@ -101,7 +102,7 @@ public class HorseDaoTest {
   }
 
   /**
-   * Negative test: Attempts to retrieve a non-existent horse and expects NotFoundException.
+   * Negative test: Attempts to retrieve a horse with a non-existent ID and verifies a NotFoundException is thrown.
    */
   @Test
   public void getByIdNonExistentThrowsNotFoundException() {
@@ -113,7 +114,7 @@ public class HorseDaoTest {
   }
 
   /**
-   * Negative test: Attempts to delete a non-existent horse and expects NotFoundException.
+   * Negative test: Attempts to delete a horse with a non-existent ID and verifies a NotFoundException is thrown.
    */
   @Test
   public void deleteNonExistentHorseThrowsNotFoundException() {
@@ -125,9 +126,9 @@ public class HorseDaoTest {
   }
 
   /**
-   * Positive test: Updates an existing horse and verifies the changes.
+   * Positive test: Updates an existing horse with new data and image, and verifies the changes were persisted.
    *
-   * @throws NotFoundException if the horse with ID -7 does not exist (unexpected in test data)
+   * @throws NotFoundException if the horse with ID -7 does not exist (not expected with test data)
    */
   @Test
   public void updateHorseSuccessfully() throws NotFoundException {
@@ -163,7 +164,7 @@ public class HorseDaoTest {
   }
 
   /**
-   * Negative test: Searches for horses with impossible criteria and expects empty result.
+   * Positive test: Searches for horses with criteria that should yield no results and verifies an empty list is returned.
    */
   @Test
   public void searchWithImpossibleCriteriaReturnsEmptyList() {

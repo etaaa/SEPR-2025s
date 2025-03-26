@@ -12,6 +12,10 @@ const baseUri = environment.backendUrl + '/horses';
 @Injectable({
   providedIn: 'root'
 })
+
+/**
+ * Service for managing horse-related API operations in the system.
+ */
 export class HorseService {
 
   constructor(
@@ -20,6 +24,12 @@ export class HorseService {
   ) {
   }
 
+  /**
+   * Retrieves a horse by its unique identifier.
+   *
+   * @param id The ID of the horse to retrieve
+   * @returns An Observable containing the horse object
+   */
   getById(id: number): Observable<Horse> {
     return this.http.get<Horse>(
       `${baseUri}/${id}`
@@ -29,10 +39,10 @@ export class HorseService {
   }
 
   /**
-   * Retrieve horses from the system, optionally filtered by criteria
+   * Retrieves horses from the system, optionally filtered by criteria.
    *
    * @param filters Optional criteria to filter horses, including limit and excludeId
-   * @return observable list of found horses
+   * @returns An Observable containing an array of horse objects
    */
   getAllOrSearch(filters: {
     name?: string,
@@ -64,20 +74,12 @@ export class HorseService {
   }
 
   /**
-   * Create a new horse in the system.
+   * Creates a new horse in the system.
    *
-   * @param horse the data for the horse that should be created
-   * @return an Observable for the created horse
+   * @param formData The form data containing horse details to be created
+   * @returns An Observable for the created horse
    */
   create(formData: FormData): Observable<Horse> {
-    /*
-    console.log(horse);
-    // Cast the object to any, so that we can circumvent the type checker.
-    // We _need_ the date to be a string here, and just passing the object with the
-    // “type error” to the HTTP client is unproblematic
-    (horse as any).dateOfBirth = formatIsoDate(horse.dateOfBirth);
-    */
-
     return this.http.post<Horse>(
       baseUri,
       formData
@@ -86,6 +88,13 @@ export class HorseService {
     );
   }
 
+  /**
+   * Updates an existing horse in the system.
+   *
+   * @param id The ID of the horse to update
+   * @param formData The form data containing updated horse details
+   * @returns An Observable for the updated horse
+   */
   update(id: number, formData: FormData): Observable<Horse> {
     return this.http.put<Horse>(
       `${baseUri}/${id}`,
@@ -95,12 +104,25 @@ export class HorseService {
     );
   }
 
+  /**
+   * Deletes a horse from the system by its ID.
+   *
+   * @param id The ID of the horse to delete
+   * @returns An Observable indicating the deletion completion
+   */
   delete(id: number): Observable<void> {
     return this.http.delete<void>(
       `${baseUri}/${id}`
     );
   }
 
+  /**
+   * Deletes a horse from the system and provides user feedback via notifications.
+   *
+   * @param horse The horse object to delete
+   * @returns An Observable indicating the deletion completion
+   * @throws {Error} If the horse ID is missing
+   */
   deleteHorse(horse: Horse): Observable<void> {
     if (!horse.id) {
       throw new Error('Horse ID is required for deletion');
@@ -119,8 +141,14 @@ export class HorseService {
     );
   }
 
+  /**
+   * Converts the horse's dateOfBirth string to a Date object.
+   *
+   * @param horse The horse object to process
+   * @returns The horse object with dateOfBirth as a Date
+   * @private
+   */
   private fixHorseDate(horse: Horse): Horse {
-    // Parse the string to a Date
     horse.dateOfBirth = new Date(horse.dateOfBirth as unknown as string);
     return horse;
   }

@@ -13,7 +13,12 @@ import {OwnerService} from 'src/app/service/owner.service';
   standalone: true,
   styleUrls: ['./owner.component.scss']
 })
+
+/**
+ * Component for displaying a list of owners.
+ */
 export class OwnerComponent implements OnInit {
+
   owners: Owner[] = [];
   bannerError: string | null = null;
 
@@ -23,10 +28,16 @@ export class OwnerComponent implements OnInit {
   ) {
   }
 
+  /**
+   * Initializes the component by loading the list of owners.
+   */
   ngOnInit(): void {
     this.reloadOwners();
   }
 
+  /**
+   * Reloads the list of owners from the service and updates the component state.
+   */
   reloadOwners() {
     this.service.getAll()
       .subscribe({

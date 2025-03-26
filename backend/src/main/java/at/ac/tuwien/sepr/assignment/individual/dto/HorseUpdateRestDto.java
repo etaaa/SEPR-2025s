@@ -19,6 +19,12 @@ public record HorseUpdateRestDto(
     Boolean deleteImage
 ) {
 
+  /**
+   * Converts the REST DTO to a full update DTO by adding the provided ID.
+   *
+   * @param id The ID to be associated with the horse update
+   * @return A new HorseUpdateDto with the provided ID and other details
+   */
   public HorseUpdateDto toUpdateDtoWithId(Long id) {
     return new HorseUpdateDto(id, name, description, dateOfBirth, sex, ownerId, motherId, fatherId, deleteImage);
   }

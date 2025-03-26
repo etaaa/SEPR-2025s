@@ -35,7 +35,7 @@ public class HorseServiceTest {
   HorseService horseService;
 
   /**
-   * Tests whether retrieving all stored horses returns the expected number and specific entries.
+   * Positive test: Verifies that retrieving all horses returns the expected number and specific entries from test data.
    */
   @Test
   public void getAllReturnsAllStoredHorses() {
@@ -51,10 +51,10 @@ public class HorseServiceTest {
   }
 
   /**
-   * Positive test: Creates a new horse and verifies the returned details.
+   * Positive test: Creates a new horse with valid data and image, and verifies the returned details match the input.
    *
-   * @throws ValidationException if the horse data is invalid (unexpected in this test)
-   * @throws ConflictException   if the creation conflicts with existing data (unexpected in this test)
+   * @throws ValidationException if the horse data is invalid (not expected in this test)
+   * @throws ConflictException   if the creation conflicts with existing data (not expected in this test)
    */
   @Test
   public void createHorseSuccessfully() throws ValidationException, ConflictException {
@@ -90,9 +90,9 @@ public class HorseServiceTest {
   }
 
   /**
-   * Positive test: Retrieves detailed information for an existing horse.
+   * Positive test: Retrieves detailed information for an existing horse by ID and verifies the returned data.
    *
-   * @throws NotFoundException if the horse with ID -6 does not exist (unexpected in test data)
+   * @throws NotFoundException if the horse with ID -6 does not exist (not expected with test data)
    */
   @Test
   public void getByIdReturnsCorrectDetails() throws NotFoundException {
@@ -114,9 +114,9 @@ public class HorseServiceTest {
   }
 
   /**
-   * Positive test: Searches for horses with specific criteria and verifies results.
+   * Positive test: Searches for horses using specific criteria and verifies the results match the search parameters.
    *
-   * @throws ValidationException if the search parameters are invalid (unexpected in this test)
+   * @throws ValidationException if the search parameters are invalid (not expected in this test)
    */
   @Test
   public void searchHorsesSuccessfully() throws ValidationException {
@@ -144,7 +144,7 @@ public class HorseServiceTest {
   }
 
   /**
-   * Negative test: Attempts to retrieve a non-existent horse and expects NotFoundException.
+   * Negative test: Attempts to retrieve a horse with a non-existent ID and verifies a NotFoundException is thrown.
    */
   @Test
   public void getByIdNonExistentThrowsNotFoundException() {
@@ -156,17 +156,15 @@ public class HorseServiceTest {
   }
 
   /**
-   * Negative test: Attempts to create a horse with invalid data and expects ValidationException.
-   *
-   * @throws ConflictException if the creation conflicts with existing data (not expected here)
+   * Negative test: Attempts to create a horse with invalid data (empty name, future date, null sex) and verifies a ValidationException is thrown.
    */
   @Test
-  public void createHorseWithInvalidDataThrowsValidationException() throws ConflictException {
+  public void createHorseWithInvalidDataThrowsValidationException() {
 
     HorseCreateDto invalidDto = new HorseCreateDto(
         "", // Invalid name
         "Valid description",
-        LocalDate.of(2025, 3, 25), // Invalid date
+        LocalDate.of(2030, 1, 1), // Invalid date
         null, // Invalid sex
         -1L,
         -3L,
@@ -184,12 +182,10 @@ public class HorseServiceTest {
   }
 
   /**
-   * Negative test: Attempts to create a horse with a non-existent owner and expects ValidationException.
-   *
-   * @throws ConflictException if the creation conflicts with existing data (not expected here)
+   * Negative test: Attempts to create a horse with a non-existent owner ID and verifies a ValidationException is thrown.
    */
   @Test
-  public void createHorseWithNonExistentOwnerThrowsValidationException() throws ConflictException {
+  public void createHorseWithNonExistentOwnerThrowsValidationException() {
 
     HorseCreateDto invalidDto = new HorseCreateDto(
         "Valid Horse",

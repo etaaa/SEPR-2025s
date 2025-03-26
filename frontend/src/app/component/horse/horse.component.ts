@@ -10,7 +10,6 @@ import {ConfirmDeleteDialogComponent} from 'src/app/component/confirm-delete-dia
 import {OwnerService} from "../../service/owner.service";
 import {Observable, of} from "rxjs";
 
-
 @Component({
   selector: 'app-horse',
   templateUrl: './horse.component.html',
@@ -23,6 +22,10 @@ import {Observable, of} from "rxjs";
   standalone: true,
   styleUrls: ['./horse.component.scss']
 })
+
+/**
+ * Component for displaying and managing a list of horses with search and deletion capabilities.
+ */
 export class HorseComponent implements OnInit {
   horses: Horse[] = [];
   bannerError: string | null = null;
@@ -48,14 +51,29 @@ export class HorseComponent implements OnInit {
   ) {
   }
 
+  /**
+   * Initializes the component by loading the list of horses.
+   */
   ngOnInit(): void {
     this.reloadHorses();
   }
 
+  /**
+   * Provides owner suggestions for the autocomplete feature based on input.
+   *
+   * @param input The search string entered by the user
+   * @returns An Observable of owner suggestions
+   */
   ownerSuggestions = (input: string): Observable<Owner[]> => (input === '')
     ? of([])
     : this.ownerService.searchByName(input);
 
+  /**
+   * Formats an owner object or string into a display-friendly name.
+   *
+   * @param owner The owner object or string to format
+   * @returns The formatted owner name or an empty string if null/undefined
+   */
   formatOwnerName(owner: Owner | string | null | undefined): string {
     if (!owner) {
       return '';
@@ -66,6 +84,9 @@ export class HorseComponent implements OnInit {
     return `${owner.firstName} ${owner.lastName}`;
   }
 
+  /**
+   * Reloads the list of horses based on current search filters.
+   */
   reloadHorses() {
     console.log('searchFilter:', this.searchFilter);
     this.service.getAllOrSearch(this.searchFilter)
@@ -85,21 +106,43 @@ export class HorseComponent implements OnInit {
       });
   }
 
+  /**
+   * Handles the search form submission by reloading horses with current filters.
+   *
+   * @param event The form submission event
+   */
   onSearchSubmit(event: Event) {
     event.preventDefault();
     this.reloadHorses();
   }
 
+  /**
+   * Formats an owner's full name for display.
+   *
+   * @param owner The owner object to format
+   * @returns The owner's full name or an empty string if null
+   */
   ownerName(owner: Owner | null): string {
     return owner
       ? `${owner.firstName} ${owner.lastName}`
       : '';
   }
 
+  /**
+   * Converts a horse's date of birth to a localized date string.
+   *
+   * @param horse The horse object containing the date of birth
+   * @returns The formatted date string
+   */
   dateOfBirthAsLocaleDate(horse: Horse): string {
     return horse.dateOfBirth.toLocaleDateString();
   }
 
+  /**
+   * Deletes a specified horse and refreshes the horse list.
+   *
+   * @param horse The horse to delete
+   */
   deleteHorse(horse: Horse) {
     this.service.deleteHorse(horse).subscribe({
       next: () => {

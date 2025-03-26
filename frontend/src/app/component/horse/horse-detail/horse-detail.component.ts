@@ -22,6 +22,10 @@ const baseUri = environment.backendUrl;
   standalone: true,
   styleUrls: ['./horse-detail.component.scss']
 })
+
+/**
+ * Component for displaying and managing the details of a single horse.
+ */
 export class HorseDetailComponent implements OnInit, OnDestroy {
   horse: Horse | null = null;
   loading = true;
@@ -38,6 +42,9 @@ export class HorseDetailComponent implements OnInit, OnDestroy {
   ) {
   }
 
+  /**
+   * Initializes the component by subscribing to route parameters and loading horse details.
+   */
   ngOnInit(): void {
     this.routeSubscription = this.route.paramMap.subscribe(params => {
       const id = params.get('id');
@@ -52,12 +59,20 @@ export class HorseDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Cleans up the component by unsubscribing from route parameter subscription.
+   */
   ngOnDestroy(): void {
     if (this.routeSubscription) {
       this.routeSubscription.unsubscribe();
     }
   }
 
+  /**
+   * Loads the horse details for the given ID.
+   *
+   * @param id The ID of the horse to load
+   */
   loadHorse(id: number): void {
     this.service.getById(id).subscribe({
       next: data => {
@@ -76,6 +91,9 @@ export class HorseDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Deletes the currently loaded horse and navigates back to the horse list.
+   */
   deleteHorse(): void {
     if (this.horse) {
       this.service.deleteHorse(this.horse).subscribe({
@@ -89,6 +107,11 @@ export class HorseDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Constructs the full URL for the horse's image, if available.
+   *
+   * @returns The full image URL or null if no image exists
+   */
   getImageUrl(): string | null {
     if (this.horse?.imageUrl) {
       return baseUri + this.horse.imageUrl;
@@ -96,14 +119,31 @@ export class HorseDetailComponent implements OnInit, OnDestroy {
     return null;
   }
 
+  /**
+   * Formats a date object as a localized date string.
+   *
+   * @param date The date to format
+   * @returns The formatted date string or an empty string if date is undefined
+   */
   formatDate(date: Date | undefined): string {
     return date ? new Date(date).toLocaleDateString() : '';
   }
 
+  /**
+   * Converts the horse's sex value to a display-friendly string.
+   *
+   * @param sex The sex value of the horse (e.g., 'FEMALE', 'MALE')
+   * @returns The display string ('Female' or 'Male')
+   */
   getSexDisplay(sex: string | undefined): string {
     return sex === 'FEMALE' ? 'Female' : 'Male';
   }
 
+  /**
+   * Constructs the full name of the horse's owner.
+   *
+   * @returns The owner's full name or 'None' if no owner exists
+   */
   getOwnerFullName(): string {
     if (!this.horse?.owner) {
       return 'None';
@@ -111,6 +151,9 @@ export class HorseDetailComponent implements OnInit, OnDestroy {
     return `${this.horse.owner.firstName} ${this.horse.owner.lastName}`;
   }
 
+  /**
+   * Navigates back to the previous page in the browser history.
+   */
   public goBack(): void {
     this.location.back();
   }

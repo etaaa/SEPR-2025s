@@ -9,6 +9,10 @@ const baseUri = environment.backendUrl + '/owners';
 @Injectable({
   providedIn: 'root'
 })
+
+/**
+ * Service for managing owner-related API operations in the system.
+ */
 export class OwnerService {
 
   constructor(
@@ -17,14 +21,20 @@ export class OwnerService {
   }
 
   /**
-   * Get all owners stored in the system
+   * Retrieves all owners stored in the system.
    *
-   * @return observable list of found owners.
+   * @returns An Observable containing an array of owner objects
    */
   getAll(): Observable<Owner[]> {
     return this.http.get<Owner[]>(baseUri);
   }
 
+  /**
+   * Searches for owners by name with a limit on results.
+   *
+   * @param name The name to search for
+   * @returns An Observable containing an array of matching owner objects (up to 5)
+   */
   public searchByName(name: string): Observable<Owner[]> {
     return this.http.get<Owner[]>(
       baseUri, {
@@ -34,10 +44,10 @@ export class OwnerService {
   }
 
   /**
-   * Create a new owner in the system.
+   * Creates a new owner in the system.
    *
-   * @param owner the data for the owner that should be created
-   * @return an Observable for the created owner
+   * @param owner The data for the owner to be created
+   * @returns An Observable for the created owner
    */
   create(owner: Owner): Observable<Owner> {
     return this.http.post<Owner>(

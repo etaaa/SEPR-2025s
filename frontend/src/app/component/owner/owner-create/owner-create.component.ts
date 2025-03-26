@@ -16,6 +16,10 @@ import {Location} from "@angular/common";
   standalone: true,
   styleUrls: ['./owner-create.component.scss']
 })
+
+/**
+ * Component for creating a new owner in the system.
+ */
 export class OwnerCreateComponent {
 
   owner: Owner = {
@@ -33,16 +37,30 @@ export class OwnerCreateComponent {
   ) {
   }
 
+  /**
+   * Determines dynamic CSS classes for form inputs based on their validation state.
+   *
+   * @param input The form input model to evaluate
+   * @returns An object containing CSS classes (e.g., 'is-invalid')
+   */
   public dynamicCssClassesForInput(input: NgModel): any {
     return {
       'is-invalid': !input.valid && !input.pristine,
     };
   }
 
+  /**
+   * Cancels the creation process and navigates back to the previous page.
+   */
   public onCancel(): void {
     this.location.back();
   }
 
+  /**
+   * Submits the owner creation form and handles the creation process.
+   *
+   * @param form The form containing the owner data
+   */
   public onSubmit(form: NgForm): void {
     if (form.valid) {
       if (this.owner.description === '') {
