@@ -2,7 +2,7 @@
 
 - **Name:** Gabriel Natter
 - **Matrikelnummer:** 12321311
-- **Gesamtsumme der Arbeitszeit am Projekt:** 75 Stunden
+- **Gesamtsumme der Arbeitszeit am Projekt:** 75.1 Stunden
 
 
 | Datum      | Dauer (Stunden) | bearbeitete Story |
@@ -37,3 +37,4 @@
 | 25.03.2025 | 2               | TS10              |
 | 26.03.2025 | 3               | TS11              |
 | 26.03.2025 | 0.5             | TS15              |
+| 26.03.2025 | 0.1             | TS29              |
